@@ -1,0 +1,69 @@
+---
+description: Design system et direction artistique premium (Dribbble/Awwwards level)
+globs: ["apps/web/**/*.tsx", "apps/web/**/*.ts", "apps/web/**/*.css", "apps/web/tailwind.config.*"]
+alwaysApply: false
+---
+
+# RULES — Design System & Direction Artistique
+
+## Principes directeurs
+1. **Respiration** : marges généreuses, grille 12 colonnes, échelle d'espacement
+   4/8/12/16/24/32/48/64/96px.
+2. **Typographie comme élément de design** : display font expressive pour les titres
+   (ex. style *Cabinet Grotesk*, *General Sans*, ou équivalent libre de droits) + sans-
+   serif lisible pour le corps (*Inter*, *Satoshi*). Hiérarchie : H1 48-72px, H2 32-40px,
+   body 16-18px, line-height 1.5-1.6.
+3. **Couleur** : palette dérivée de l'identité Rotary, réinterprétée avec un ton
+   premium — jamais saturée "corporate daté".
+4. **Profondeur subtile** : ombres douces multi-couches, léger glassmorphism sur les
+   panneaux flottants (navbar, modals, cards du dashboard) — jamais de skeuomorphisme.
+5. **Motion signifiant** : chaque animation a une fonction (feedback, orientation,
+   continuité spatiale) — jamais de décoration gratuite.
+6. **Composants sur-mesure** : cards d'action avec galerie photo en hover, timeline
+   animée pour l'historique du club, compteurs animés (membres, projets, heures de
+   bénévolat), carte interactive pour la localisation des actions.
+7. **Cohérence vitrine vs produit** : la vitrine publique est éditoriale et immersive
+   (grand hero, storytelling visuel) ; l'espace connecté est un produit SaaS dense mais
+   lisible (sidebar de navigation, data viz claire).
+
+## Design tokens (base — à raffiner dans `tailwind.config.ts`)
+```ts
+colors: {
+  primary: { 50:'#EEF3FB', 100:'#D6E2F5', 300:'#7FA3D9', 500:'#2C5FA8',
+             700:'#17458F', 900:'#0B2A5C' },
+  accent:  { 50:'#FFF7E8', 300:'#FCCF6E', 500:'#F7A81B', 700:'#B87A0C' },
+  neutral: { 0:'#FFFFFF', 50:'#FAFAF9', 100:'#F1F1EF', 400:'#94A3B8',
+             700:'#334155', 900:'#0F172A' },
+},
+fontFamily: {
+  display: ['"Cabinet Grotesk"', 'sans-serif'],
+  body: ['"Inter"', 'sans-serif'],
+},
+borderRadius: { xl: '1rem', '2xl': '1.5rem' },
+```
+Prévoir un mode sombre cohérent avec la même hiérarchie de tokens.
+
+## Bibliothèque d'animation
+Toute animation est centralisée dans `design-system/motion.ts` (variants Framer Motion
+réutilisables), jamais dupliquée composant par composant :
+- `fadeInUp` — scroll-reveal (fade + translateY 16-24px).
+- `staggerChildren` — listes/grilles d'éléments qui apparaissent en cascade.
+- `scaleOnHover` — cards et boutons (scale 1.02, shadow lift,
+  easing `cubic-bezier(0.16, 1, 0.3, 1)`).
+- Transitions de page via `AnimatePresence`.
+- Skeleton loaders animés pour toute donnée asynchrone (jamais un simple spinner).
+- Feedback de formulaire en temps réel, animé, sur validation Zod inline.
+
+## À proscrire absolument
+- Templates Bootstrap/AdminLTE non retravaillés.
+- Icônes clipart (roue dentée Rotary générique en fond de page, drapeaux, colombes...).
+- Dégradés arc-en-ciel ou couleurs hors palette.
+- Animations décoratives sans fonction (parallax gratuit, particules).
+- Tableaux HTML natifs non stylés dans le dashboard.
+- `outline: none` sans remplacement de focus visible.
+
+## Exigences non fonctionnelles liées au design
+- Responsive-first, mobile impeccable, PWA installable.
+- Accessibilité WCAG AA minimum (contraste, navigation clavier, `aria-*` corrects).
+- Cible Lighthouse : Performance ≥ 90, Accessibilité ≥ 95, PWA installable.
+- Images en lazy loading, formats WebP/AVIF.

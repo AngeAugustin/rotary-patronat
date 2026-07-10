@@ -1,0 +1,55 @@
+---
+description: Règles de sécurité — non négociables, priment sur toute autre règle
+alwaysApply: true
+---
+
+# RULES — Sécurité (priorité absolue)
+
+Ces règles priment toujours sur une préférence de design ou un raccourci de
+productivité. Aucune exception sans le signaler explicitement comme dette technique.
+
+## Authentification & sessions
+- Mots de passe hashés (`argon2` de préférence, ou `bcrypt`) — jamais en clair, jamais
+  loggés, jamais renvoyés dans une réponse API.
+- JWT access token à courte durée de vie + refresh token stocké en cookie
+  `httpOnly secure sameSite=strict`.
+- Guards de rôles appliqués systématiquement, cohérents avec la matrice de droits
+  (Visiteur / Membre / Responsable de commission / Administrateur).
+
+## Protection applicative
+- Protection CSRF sur toutes les routes de mutation.
+- Sanitization de tout contenu riche généré par les utilisateurs (publications,
+  commentaires, messages) avant stockage et avant rendu, pour prévenir le XSS.
+- Aucune requête SQL brute non paramétrée — Prisma garantit la protection contre
+  l'injection SQL tant que le `$queryRawUnsafe` est évité.
+- Validation stricte des uploads : type MIME, taille maximale, extension cohérente
+  avec le contenu réel du fichier.
+
+## Journalisation & traçabilité
+- Toute action sensible (connexion, création/modification/suppression, téléchargement,
+  validation de bénévolat, modération) doit être écrite dans le journal des activités
+  avec : auteur, horodatage, action, ressource concernée.
+- Le journal des activités est en lecture seule pour tous les rôles sauf
+  Administrateur.
+
+## Données personnelles
+- Minimisation des données collectées, en particulier dans le formulaire d'adhésion
+  et le module Bénévolat.
+- Prévoir un mécanisme de suppression/anonymisation des données personnelles sur
+  demande (droit à l'oubli).
+- Ne jamais exposer d'informations de membres à un rôle qui n'y a pas droit, y compris
+  via des endpoints indirects (ex. recherche globale, statistiques agrégées mal
+  filtrées).
+
+## Infrastructure
+- Sauvegardes automatiques de la base de données planifiées et testées
+  (restaurabilité vérifiée, pas seulement l'existence du backup).
+- Variables d'environnement et secrets jamais commit dans le repo, validés au
+  démarrage de l'application (échec explicite si une variable requise manque).
+- Séparation stricte des environnements (dev/staging/production), notamment pour les
+  clés JWT et les accès base de données.
+
+## Comportement attendu en cas de doute
+Si une implémentation demandée introduit un risque de sécurité (ex. exposition de
+données, contournement d'un guard, stockage non chiffré d'une donnée sensible),
+le signaler explicitement avant d'implémenter, même si cela n'a pas été demandé.

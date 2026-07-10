@@ -1,0 +1,112 @@
+---
+description: Contexte métier et fonctionnel du projet Rotary Club — source de vérité
+alwaysApply: true
+---
+
+# CONTEXTE — Plateforme Web Rotary Club Cotonou Le Nautile Patronat
+
+## Identité du client
+Rotary Club Cotonou Le Nautile Patronat — Club Satellite Passeport (Bénin).
+
+## Nature du projet
+Refonte digitale complète en deux univers :
+1. **Espace public** : vitrine institutionnelle (présentation, actions, actualités,
+   réunions, bibliothèque publique, formulaire d'adhésion).
+2. **Espace connecté sécurisé** : plateforme collaborative pour membres, responsables
+   de commission et administrateurs (dashboard, gouvernance, projets, bénévolat,
+   calendrier, messagerie, réseau social interne, bibliothèque privée).
+
+## Enjeux business
+- Renforcer la visibilité publique et le rayonnement du club.
+- Qualifier et faciliter le recrutement de nouveaux membres.
+- Centraliser la gouvernance interne (commissions, projets, documents).
+- Digitaliser la vie du club (messagerie, fil d'actualité, calendrier).
+- Offrir une expérience "produit" niveau SaaS moderne, pas un site vitrine associatif
+  basique.
+
+## Matrice des utilisateurs et droits
+| Profil | Accès |
+|---|---|
+| Visiteur | Contenus publics uniquement |
+| Membre | Espace privé complet (dashboard, réseau social interne, messagerie, bénévolat) |
+| Responsable de commission | Droits Membre + gestion de sa commission (membres, contenus, projets, modération locale) |
+| Administrateur | Accès total : utilisateurs, rôles, commissions, logs, statistiques, modération globale |
+
+Règle métier structurante : **un membre est obligatoirement rattaché à au moins une
+commission**, peut appartenir à plusieurs commissions simultanément, et peut y occuper
+des postes différents (Président de commission, Vice-président, Secrétaire, Rapporteur,
+Membre, ou tout autre poste défini par le club).
+
+## Périmètre fonctionnel — Espace public
+- **Accueil** : présentation du club, mot du Président, actualités récentes, prochaines
+  réunions, actions mises en avant, liens réseaux sociaux.
+- **Le Club** : historique, vision/mission, valeurs, organisation, bureau exécutif,
+  commissions, galerie photos.
+- **Nos actions** : fiches détaillées (titre, description, date, localisation, galerie,
+  vidéos, partenaires, résultats obtenus).
+- **Nos actualités** : liste chronologique, recherche, catégories, partage social.
+- **Nos réunions** : réunions statutaires, conférences, événements, assemblées
+  (date, heure, lieu, ordre du jour, intervenants).
+- **Bibliothèque** : documents publics (PDF, images, vidéos, comptes rendus publics),
+  classés par catégories.
+- **Nous rejoindre** : formulaire d'adhésion (infos personnelles, profession,
+  motivation, pièces jointes) transmis à l'administration pour traitement.
+
+## Périmètre fonctionnel — Espace connecté
+- **A. Tableau de bord** personnalisé par rôle : réunions à venir, événements,
+  notifications, messages non lus, publications récentes, projets, tâches assignées,
+  statistiques personnelles. Vues enrichies pour responsables de commission
+  (activités de la commission, avancement des projets, membres, indicateurs de
+  participation) et administrateurs (indicateurs globaux du club).
+- **B. Administration** : gestion des utilisateurs (CRUD, activation/désactivation),
+  gestion des rôles (Administrateur, Président, Secrétaire, Trésorier, Responsable de
+  commission, Membre), gestion des commissions (nom, description, responsable, membres,
+  documents, calendrier propre, projets), journal des activités (logs de connexions,
+  publications, modifications, suppressions, téléchargements), statistiques (membres,
+  commissions, projets, actions, publications, bénévolat, téléchargements, participation
+  réunions), modération (publications, commentaires, signalements, documents).
+- **C. Module Bénévolat** : déclaration de participations dans d'autres clubs Rotary
+  (club visité, ville, pays, activité, description, date, heure, durée, nombre
+  d'heures, preuve de participation), validation éventuelle par un administrateur,
+  historique personnel et statistiques individuelles.
+- **D. Gestion de projets** : titre, description, commission responsable, responsable
+  du projet, objectifs, dates début/fin, budget prévisionnel/consommé, statut
+  (Prévu, En cours, Suspendu, Terminé), niveau d'avancement, documents, photos/vidéos,
+  partenaires, bénéficiaires. Fonctionnalités : création/modification, affectation de
+  membres, gestion des tâches, suivi d'avancement, historique des modifications,
+  comptes rendus, pièces jointes, tableau de bord de suivi, statistiques par commission
+  et par projet. Un projet peut être rattaché à une commission et apparaître
+  automatiquement dans son espace.
+- **E. Calendrier partagé** : vue mensuelle, vue semaine, invitations, rappels, suivi
+  de participation, synchronisation Google Calendar/Outlook (optionnelle).
+- **F. Messagerie interne** : conversations privées, groupes, partage de documents,
+  notifications, recherche — temps réel.
+- **G. Fil d'actualité interne** : annonces, événements, communiqués, photos, vidéos.
+- **H. Publications des membres** : texte/images/vidéos/documents/liens ; likes,
+  commentaires, réponses aux commentaires, mentions (@Nom), republication, signalement,
+  notifications.
+- **I. Bibliothèque privée** : comptes rendus, procès-verbaux, guides Rotary,
+  formulaires, modèles de documents, photos, vidéos — classement par catégories,
+  recherche multicritères.
+
+## Transverses
+- **Notifications** (in-app + email) sur : nouveau message, nouvelle publication,
+  commentaire, mention, rappel de réunion, validation de bénévolat, nouveaux documents,
+  nouveaux projets, échéances de projets, affectation à une commission/projet,
+  événements.
+- **Recherche globale** dans : actualités, actions, documents, publications, membres
+  (selon droits), événements, commissions, projets.
+
+## Plan de développement de référence (8 phases)
+1. Fondations (monorepo, auth JWT + RBAC, design tokens, composants UI de base).
+2. Espace public complet avec DA finalisée.
+3. Dashboard & Administration (utilisateurs, rôles, commissions, logs, stats).
+4. Commissions & Projets (modèle de données, affectations, avancement, budget).
+5. Vie sociale interne (fil d'actualité, publications, messagerie temps réel,
+   notifications).
+6. Bénévolat & Calendrier (déclarations, validations, sync externe optionnelle).
+7. Bibliothèque privée & recherche globale.
+8. PWA, performance, accessibilité, durcissement sécurité, tests, déploiement.
+
+En cas de doute sur une règle métier non couverte ici, le poser explicitement comme
+question de clarification plutôt que de trancher par hypothèse.

@@ -1,0 +1,69 @@
+---
+description: Règles de code backend NestJS/Prisma/PostgreSQL
+globs: ["apps/api/**/*.ts", "apps/api/prisma/**/*"]
+alwaysApply: false
+---
+
+# RULES — Backend (NestJS / Prisma / PostgreSQL)
+
+## Architecture
+- Un module NestJS par domaine métier, séparé en `controller / service / dto / entity`.
+- Suivre la structure imposée :
+```
+apps/api/src/
+├── modules/
+│   ├── auth/
+│   ├── users/
+│   ├── roles/
+│   ├── commissions/
+│   ├── projects/
+│   ├── volunteering/
+│   ├── calendar/
+│   ├── messaging/            # Gateway WebSocket
+│   ├── posts/
+│   ├── news-feed/
+│   ├── documents/            # Bibliothèque publique + privée
+│   ├── moderation/
+│   ├── notifications/
+│   ├── logs/
+│   ├── stats/
+│   └── membership-requests/  # Formulaire "Nous rejoindre"
+├── common/                   # guards, interceptors, pipes, decorators
+└── prisma/
+```
+
+## Règles de code
+- DTOs validés (`class-validator` ou Zod) — jamais de `req.body` non typé.
+- Guards de rôles (`RolesGuard`) sur chaque route sensible, cohérents avec la matrice
+  de droits définie dans `000-context.mdc` (Visiteur / Membre / Responsable de
+  commission / Administrateur).
+- Toute action sensible (création/suppression/modification, connexion, téléchargement)
+  écrite dans le module `logs` (journal des activités).
+- Réponses API normalisées : `{ data, meta }` pour les listes paginées,
+  `{ error: { code, message } }` structuré pour les erreurs.
+- Pagination par défaut sur toute ressource pouvant devenir volumineuse (publications,
+  documents, logs, membres).
+- Tests unitaires obligatoires sur les services critiques : auth, permissions, gestion
+  de commissions/projets.
+
+## Modèle de données — points d'attention
+- Un membre est rattaché à **au moins une commission**, peut appartenir à plusieurs
+  commissions, avec un **poste potentiellement différent par commission** (Président
+  de commission, Vice-président, Secrétaire, Rapporteur, Membre, poste personnalisé).
+  Modéliser via une table de jointure `commission_members` avec un champ `role`, pas
+  une relation many-to-many nue.
+- Un projet est rattaché à une commission responsable et peut avoir plusieurs membres
+  affectés, des tâches, un historique de modifications, un budget prévisionnel/
+  consommé distinct.
+- Le module Bénévolat nécessite un champ de validation (`pending / validated /
+  rejected`) par un administrateur, avec traçabilité de qui a validé et quand.
+
+## Temps réel
+- WebSocket (Gateway NestJS) pour : messagerie, notifications live, mise à jour du fil
+  d'actualité, compteurs de non-lus.
+- Authentifier les connexions WebSocket via le même JWT que l'API REST.
+
+## Fichiers & stockage
+- Stockage objet compatible S3 (jamais de disque local en production) pour images,
+  vidéos, PDF, justificatifs de bénévolat, documents de commissions/projets.
+- Validation stricte des uploads (type MIME, taille) avant écriture en stockage.

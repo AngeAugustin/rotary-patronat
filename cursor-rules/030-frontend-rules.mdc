@@ -1,0 +1,67 @@
+---
+description: Règles de code frontend React/Vite/TypeScript
+globs: ["apps/web/**/*.ts", "apps/web/**/*.tsx"]
+alwaysApply: false
+---
+
+# RULES — Frontend (React / Vite / TypeScript)
+
+## Architecture
+- Architecture par **feature module** (`modules/commissions`, `modules/projects`...),
+  jamais par type de fichier.
+- Suivre la structure imposée :
+```
+apps/web/src/
+├── app/                # Routing, providers globaux
+├── modules/
+│   ├── public/         # Accueil, Club, Actions, Actualités, Réunions,
+│   │                     Bibliothèque publique, Adhésion
+│   ├── auth/
+│   ├── dashboard/
+│   ├── commissions/
+│   ├── projects/
+│   ├── volunteering/
+│   ├── calendar/
+│   ├── messaging/
+│   ├── news-feed/
+│   ├── posts/
+│   ├── library-private/
+│   ├── admin/
+│   └── notifications/
+├── components/ui/      # shadcn/ui personnalisés
+├── design-system/      # tokens, motion.ts
+├── hooks/
+├── lib/                # api client, query keys, schémas Zod partagés
+└── stores/
+```
+
+## Règles de code
+- TypeScript **strict mode**, `any` interdit sauf justification commentée en ligne.
+- Un composant = présentation pure. La logique de données passe par des hooks dédiés
+  (`useProjects`, `useCommissionMembers`) basés sur TanStack Query.
+- Composant React < 200 lignes ; au-delà, extraire en sous-composants.
+- Tout formulaire : `React Hook Form` + schéma `Zod` colocalisé, réutilisé côté contrat
+  API via `packages/shared-types`.
+- États systématiques pour toute donnée asynchrone : chargement (skeleton), erreur
+  (message actionnable), vide (empty state illustré).
+- Nommage : anglais pour le code (`CommissionCard`), français pour les labels/contenus
+  affichés (prévoir `react-i18next` même en mono-langue au lancement).
+- Aucun secret ni donnée métier en dur — tout passe par `.env` validé au boot.
+
+## Accessibilité
+- Navigation clavier complète, focus visible stylé.
+- `aria-*` corrects sur tous les composants interactifs custom.
+- Contraste AA minimum sur tout texte et élément d'interface.
+
+## PWA
+- Service Worker configuré, fonctionnement hors-ligne pour les vues déjà chargées
+  (lecture des actualités, actions, documents déjà en cache).
+- Synchronisation automatique des données à la reconnexion.
+- Manifest PWA complet (icônes, couleurs de thème alignées sur les tokens design).
+- Web Push pour les notifications, selon capacités de la plateforme.
+
+## Performance
+- Lazy loading des routes (`React.lazy` / code-splitting par module).
+- Images en lazy loading, formats WebP/AVIF.
+- Pagination systématique côté UI pour toute liste potentiellement longue
+  (publications, documents, logs, membres).
