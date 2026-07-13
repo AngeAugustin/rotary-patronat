@@ -1,6 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AuthUser, LoginInput } from '@rotary/shared-types';
-import { login, logout, fetchCurrentUser, authQueryKeys } from '../api';
+import type {
+  AuthUser,
+  ForgotPasswordInput,
+  LoginInput,
+  ResetPasswordInput,
+  VerifyResetOtpInput,
+} from '@rotary/shared-types';
+import {
+  forgotPassword,
+  login,
+  logout,
+  fetchCurrentUser,
+  resetPassword,
+  verifyResetOtp,
+  authQueryKeys,
+} from '../api';
 import { getAccessToken } from '@/lib/api-client';
 import { connectRealtime, disconnectRealtime } from '@/lib/realtime-client';
 import { useAuthSession } from '../context/AuthSessionProvider';
@@ -27,6 +41,24 @@ export function useLogin() {
       setAuthenticated(true);
       connectRealtime();
     },
+  });
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (input: ForgotPasswordInput) => forgotPassword(input),
+  });
+}
+
+export function useVerifyResetOtp() {
+  return useMutation({
+    mutationFn: (input: VerifyResetOtpInput) => verifyResetOtp(input),
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: (input: ResetPasswordInput) => resetPassword(input),
   });
 }
 

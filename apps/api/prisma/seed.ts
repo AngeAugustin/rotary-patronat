@@ -12,7 +12,11 @@ const IMG = {
   news1: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&q=80',
   news2: 'https://images.unsplash.com/photo-1509099836639-18d0d8561f2e?w=800&q=80',
   news3: 'https://images.unsplash.com/photo-1521737711862-e3b97375f902?w=800&q=80',
-  president: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80',
+  president: 'https://i.postimg.cc/hPSfLRjw/PHOTO-2026-07-06-09-01-17.jpg',
+  protocoleAdjoint: 'https://i.postimg.cc/jS6pbBKN/PHOTO-2026-07-06-09-02-04-%282%29.jpg',
+  communication: 'https://i.postimg.cc/V6HyhMwV/PHOTO-2026-07-06-09-02-04-Copie.jpg',
+  pastPresident: 'https://i.postimg.cc/QtzPm3kL/PHOTO-2026-07-06-09-13-27.jpg',
+  intermediatePastPresident: 'https://i.postimg.cc/CL8yvzQf/PHOTO-2026-07-06-09-02-04-%282%29-Copie.jpg',
   gallery1: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80',
   gallery2: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80',
   gallery3: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=80',
@@ -290,7 +294,12 @@ async function seedPhase3Members() {
 async function seedClubContent() {
   await prisma.clubProfile.upsert({
     where: { id: 'club-profile' },
-    update: {},
+    update: {
+      presidentName: 'Regis SEDAGBANDE',
+      presidentPhoto: IMG.president,
+      presidentMessage:
+        'Chers prospects, bienvenue sur la plateforme digitale du Rotary Club Cotonou Le Nautile Patronat. Notre ambition est de faire rayonner nos actions et de renforcer les liens entre nos membres et la société civile. Ensemble, servons plus, servons mieux.',
+    },
     create: {
       id: 'club-profile',
       history:
@@ -303,18 +312,42 @@ async function seedClubContent() {
       organization:
         'Le club est structuré autour d\'un bureau exécutif et de commissions thématiques. Chaque membre contribue activement aux projets selon ses compétences et sa commission d\'appartenance.',
       presidentMessage:
-        'Chers visiteurs, bienvenue sur la plateforme digitale du Rotary Club Cotonou Le Nautile Patronat. Notre ambition est de faire rayonner nos actions et de renforcer les liens entre nos membres et la société civile. Ensemble, servons plus, servons mieux.',
-      presidentName: 'Jean-Baptiste Adjanohoun',
+        'Chers prospects, bienvenue sur la plateforme digitale du Rotary Club Cotonou Le Nautile Patronat. Notre ambition est de faire rayonner nos actions et de renforcer les liens entre nos membres et la société civile. Ensemble, servons plus, servons mieux.',
+      presidentName: 'Regis SEDAGBANDE',
       presidentTitle: 'Président du club',
       presidentPhoto: IMG.president,
     },
   });
 
   const executives = [
-    { name: 'Jean-Baptiste Adjanohoun', role: 'Président', photo: IMG.president, sortOrder: 1 },
-    { name: 'Marie-Claire Dossou', role: 'Secrétaire', sortOrder: 2 },
-    { name: 'Koffi Mensah', role: 'Trésorier', sortOrder: 3 },
-    { name: 'Aïcha Bello', role: 'Présidente élue', sortOrder: 4 },
+    { name: 'Regis SEDAGBANDE', role: 'Président', photo: IMG.president, sortOrder: 1 },
+    { name: 'Imane SAGBOHAN', role: 'Secrétaire Général', sortOrder: 2 },
+    { name: 'Marlène CAKPO-CHICHI', role: 'Trésorière Générale', sortOrder: 3 },
+    { name: 'Chérifath TINIKOWA', role: 'Protocole', sortOrder: 4 },
+    {
+      name: 'Ramby Singh',
+      role: 'Protocole Adjoint',
+      photo: IMG.protocoleAdjoint,
+      sortOrder: 5,
+    },
+    {
+      name: 'Augustin FACHEHOUN',
+      role: "Président de la Communication et de l'Image Publique",
+      photo: IMG.communication,
+      sortOrder: 6,
+    },
+    {
+      name: 'Moutawakilou ADEBO',
+      role: 'Past President',
+      photo: IMG.pastPresident,
+      sortOrder: 7,
+    },
+    {
+      name: 'Christiane HOUNSOU',
+      role: 'Intermediate Past President',
+      photo: IMG.intermediatePastPresident,
+      sortOrder: 8,
+    },
   ];
 
   await prisma.executiveMember.deleteMany();

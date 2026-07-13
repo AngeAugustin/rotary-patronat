@@ -87,7 +87,7 @@ export function ActionsPage() {
                         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
                           À la une
                         </p>
-                        <ActionCard action={featured} layout="featured" />
+                        <ActionCard action={featured} layout="row" emphasis />
                       </div>
                     </ScrollReveal>
                   )}
@@ -135,7 +135,7 @@ function ActionsLoadingState() {
     <div className="space-y-6">
       <div className="space-y-3">
         <div className="h-3 w-16 animate-pulse rounded bg-neutral-200/80" />
-        <ActionCardSkeleton />
+        <ActionCardSkeleton layout="row" />
       </div>
       <div className="space-y-3">
         <div className="h-3 w-28 animate-pulse rounded bg-neutral-200/80" />

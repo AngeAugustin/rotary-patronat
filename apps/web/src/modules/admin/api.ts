@@ -145,6 +145,18 @@ export async function fetchModerationComments(page = 1) {
   );
 }
 
+export async function fetchModerationReports(page = 1) {
+  return apiRequest<PaginatedResponse<import('@rotary/shared-types').ModerationReport>>(
+    `/moderation/reports?page=${page}&limit=20`,
+  );
+}
+
+export async function dismissModerationReport(id: string) {
+  return apiRequest<{ data: { success: boolean } }>(`/moderation/reports/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function deleteModerationPost(id: string) {
   return apiRequest<{ data: { success: boolean } }>(`/moderation/posts/${id}`, {
     method: 'DELETE',

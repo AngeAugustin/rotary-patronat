@@ -3,6 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { RoleCode } from '@rotary/shared-types';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { LoginPage } from '@/modules/auth/pages/LoginPage';
+import { ForgotPasswordPage } from '@/modules/auth/pages/ForgotPasswordPage';
+import { VerifyResetOtpPage } from '@/modules/auth/pages/VerifyResetOtpPage';
+import { ResetPasswordPage } from '@/modules/auth/pages/ResetPasswordPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RequireRole } from './RequireRole';
 import { PublicLayout } from '@/modules/public/layouts/PublicLayout';
@@ -217,6 +220,9 @@ export function AppRouter() {
             <Route path="/nous-rejoindre" element={<JoinPage />} />
           </Route>
           <Route path="/connexion" element={<LoginPage />} />
+          <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
+          <Route path="/mot-de-passe-oublie/otp" element={<VerifyResetOtpPage />} />
+          <Route path="/mot-de-passe-oublie/nouveau" element={<ResetPasswordPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />

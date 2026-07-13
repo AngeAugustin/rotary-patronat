@@ -34,12 +34,21 @@ export function ConfirmDialog({
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const confirmPendingRef = useRef(confirmPending);
 
+  onCloseRef.current = onClose;
+  confirmPendingRef.current = confirmPending;
+
+  // Focus the panel only when the dialog opens — not on every parent re-render
+  // (e.g. typing in a reason field would otherwise steal focus from the textarea).
   useEffect(() => {
     if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !confirmPending) onClose();
+      if (e.key === 'Escape' && !confirmPendingRef.current) {
+        onCloseRef.current();
+      }
     };
 
     const previousOverflow = document.body.style.overflow;
@@ -51,7 +60,7 @@ export function ConfirmDialog({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, onClose, confirmPending]);
+  }, [open]);
 
   if (!open) return null;
 

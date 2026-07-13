@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, LogIn, Mail } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@rotary/shared-types';
 import { useLogin } from '../hooks/use-auth';
@@ -13,8 +13,16 @@ import { Label } from '@/components/ui/label';
 import { fadeInUp } from '@/design-system/motion';
 import { motion } from 'framer-motion';
 
+interface LocationState {
+  passwordResetSuccess?: boolean;
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const passwordResetSuccess = Boolean(
+    (location.state as LocationState | null)?.passwordResetSuccess,
+  );
   const loginMutation = useLogin();
   const { isAuthReady, isAuthenticated } = useAuthSession();
 
@@ -86,6 +94,15 @@ export function LoginPage() {
               </div>
 
               <form className="space-y-5 p-8" onSubmit={onSubmit} noValidate>
+                {passwordResetSuccess && (
+                  <div
+                    className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+                    role="status"
+                  >
+                    Votre mot de passe a été mis à jour. Vous pouvez vous connecter.
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <Label htmlFor="email" className="text-primary-900">
                     Adresse e-mail
@@ -113,9 +130,17 @@ export function LoginPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="password" className="text-primary-900">
-                    Mot de passe
-                  </Label>
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="password" className="text-primary-900">
+                      Mot de passe
+                    </Label>
+                    <Link
+                      to="/mot-de-passe-oublie"
+                      className="text-sm font-medium text-primary-700 transition-colors hover:text-primary-900"
+                    >
+                      Mot de passe oublié ?
+                    </Link>
+                  </div>
                   <div className="relative">
                     <Lock
                       className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"

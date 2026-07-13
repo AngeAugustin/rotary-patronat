@@ -23,6 +23,11 @@ export const PostVisibility = {
 
 export type PostVisibility = (typeof PostVisibility)[keyof typeof PostVisibility];
 
+export const POST_VISIBILITY_LABELS: Record<PostVisibility, string> = {
+  [PostVisibility.ALL_MEMBERS]: 'Tous les membres',
+  [PostVisibility.COMMISSION]: 'Ma commission',
+};
+
 export const postAttachmentSchema = z.object({
   type: z.enum(['image', 'video', 'document', 'link']),
   url: z.string().url(),
@@ -65,6 +70,18 @@ export const postCommentSchema = z.object({
   parentId: z.string().uuid().nullable(),
   replyCount: z.number().int(),
   createdAt: z.string().datetime(),
+  replies: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        content: z.string(),
+        author: postAuthorSchema,
+        parentId: z.string().uuid().nullable(),
+        replyCount: z.number().int(),
+        createdAt: z.string().datetime(),
+      }),
+    )
+    .optional(),
 });
 
 export type PostComment = z.infer<typeof postCommentSchema>;
@@ -79,13 +96,26 @@ export const createPostSchema = z.object({
   kind: z.enum(['MEMBER_POST', 'ANNOUNCEMENT', 'EVENT', 'COMMUNIQUE']).optional(),
   content: z.string().min(1, 'Le contenu est requis'),
   attachments: z.array(postAttachmentSchema).optional(),
-  linkUrl: z.string().url().optional(),
+  linkUrl: z.union([z.string().url('URL invalide'), z.literal('')]).optional(),
   visibility: z.enum(['ALL_MEMBERS', 'COMMISSION']).optional(),
-  commissionId: z.string().uuid().optional(),
+  commissionId: z.union([z.string().uuid(), z.literal('')]).optional(),
   repostOfId: z.string().uuid().optional(),
 });
 
 export type CreatePostInput = z.infer<typeof createPostSchema>;
+
+export const updatePostSchema = z.object({
+  kind: z.enum(['MEMBER_POST', 'ANNOUNCEMENT', 'EVENT', 'COMMUNIQUE']).optional(),
+  content: z.string().min(1, 'Le contenu est requis').optional(),
+  attachments: z.array(postAttachmentSchema).optional(),
+  linkUrl: z
+    .union([z.string().url('URL invalide'), z.literal(''), z.null()])
+    .optional(),
+  visibility: z.enum(['ALL_MEMBERS', 'COMMISSION']).optional(),
+  commissionId: z.union([z.string().uuid(), z.literal(''), z.null()]).optional(),
+});
+
+export type UpdatePostInput = z.infer<typeof updatePostSchema>;
 
 export const createCommentSchema = z.object({
   content: z.string().min(1, 'Le commentaire est requis'),
@@ -93,3 +123,11 @@ export const createCommentSchema = z.object({
 });
 
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+
+export const createContentReportSchema = z.object({
+  targetType: z.enum(['POST', 'COMMENT']),
+  targetId: z.string().uuid(),
+  reason: z.string().max(500).optional(),
+});
+
+export type CreateContentReportInput = z.infer<typeof createContentReportSchema>;

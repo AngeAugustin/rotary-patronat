@@ -1,12 +1,17 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import * as argon2 from 'argon2';
 import { EnvConfig } from '../../config/env.validation';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { LogsService } from '../logs/logs.service';
+import { MailService } from '../mail/mail.service';
 import { AuthUser } from '@rotary/shared-types';
 
 interface JwtPayload {
@@ -14,6 +19,18 @@ interface JwtPayload {
   email: string;
   roles: string[];
 }
+
+interface PasswordResetJwtPayload {
+  sub: string;
+  purpose: 'password_reset';
+}
+
+const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_EXPIRES_MINUTES = 10;
+const OTP_MAX_ATTEMPTS = 5;
+const RESET_TOKEN_EXPIRES_IN = '15m';
+const GENERIC_FORGOT_MESSAGE =
+  'Si un compte est associé à cette adresse, un code de vérification vient de vous être envoyé.';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +40,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<EnvConfig, true>,
     private readonly logsService: LogsService,
+    private readonly mailService: MailService,
   ) {}
 
   async login(email: string, password: string, ipAddress?: string) {
@@ -96,6 +114,201 @@ export class AuthService {
       return null;
     }
     return this.usersService.mapToAuthUser(user);
+  }
+
+  async requestPasswordReset(email: string, ipAddress?: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.usersService.findByEmail(normalizedEmail);
+
+    if (user?.isActive) {
+      const code = String(randomInt(100_000, 1_000_000));
+      const codeHash = this.hashToken(code);
+      const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+
+      await this.prisma.passwordResetOtp.updateMany({
+        where: { userId: user.id, consumedAt: null },
+        data: { consumedAt: new Date() },
+      });
+
+      await this.prisma.passwordResetOtp.create({
+        data: {
+          userId: user.id,
+          codeHash,
+          expiresAt,
+        },
+      });
+
+      await this.mailService.sendPasswordResetOtp({
+        to: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        code,
+        expiresInMinutes: OTP_EXPIRES_MINUTES,
+      });
+
+      await this.logsService.logActivity({
+        userId: user.id,
+        action: 'PASSWORD_RESET_REQUEST',
+        resource: 'auth',
+        ipAddress,
+      });
+    }
+
+    return { message: GENERIC_FORGOT_MESSAGE };
+  }
+
+  async verifyResetOtp(email: string, code: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.usersService.findByEmail(normalizedEmail);
+
+    if (!user?.isActive) {
+      throw new BadRequestException({
+        error: {
+          code: 'INVALID_OTP',
+          message: 'Code invalide ou expiré',
+        },
+      });
+    }
+
+    const otp = await this.prisma.passwordResetOtp.findFirst({
+      where: {
+        userId: user.id,
+        consumedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otp || otp.expiresAt < new Date()) {
+      throw new BadRequestException({
+        error: {
+          code: 'INVALID_OTP',
+          message: 'Code invalide ou expiré',
+        },
+      });
+    }
+
+    if (otp.attempts >= OTP_MAX_ATTEMPTS) {
+      await this.prisma.passwordResetOtp.update({
+        where: { id: otp.id },
+        data: { consumedAt: new Date() },
+      });
+      throw new BadRequestException({
+        error: {
+          code: 'OTP_MAX_ATTEMPTS',
+          message: 'Trop de tentatives. Demandez un nouveau code.',
+        },
+      });
+    }
+
+    const codeHash = this.hashToken(code.trim());
+    if (codeHash !== otp.codeHash) {
+      await this.prisma.passwordResetOtp.update({
+        where: { id: otp.id },
+        data: { attempts: { increment: 1 } },
+      });
+      throw new BadRequestException({
+        error: {
+          code: 'INVALID_OTP',
+          message: 'Code invalide ou expiré',
+        },
+      });
+    }
+
+    await this.prisma.passwordResetOtp.update({
+      where: { id: otp.id },
+      data: { consumedAt: new Date() },
+    });
+
+    const resetToken = await this.jwtService.signAsync(
+      { sub: user.id, purpose: 'password_reset' } satisfies PasswordResetJwtPayload,
+      {
+        secret: this.configService.get('JWT_ACCESS_SECRET', { infer: true }),
+        expiresIn: RESET_TOKEN_EXPIRES_IN,
+      },
+    );
+
+    return { resetToken };
+  }
+
+  async resetPassword(
+    resetToken: string,
+    password: string,
+    confirmPassword: string,
+    ipAddress?: string,
+  ) {
+    if (password !== confirmPassword) {
+      throw new BadRequestException({
+        error: {
+          code: 'PASSWORD_MISMATCH',
+          message: 'Les mots de passe ne correspondent pas',
+        },
+      });
+    }
+
+    if (password.length < 8) {
+      throw new BadRequestException({
+        error: {
+          code: 'WEAK_PASSWORD',
+          message: 'Le mot de passe doit contenir au moins 8 caractères',
+        },
+      });
+    }
+
+    let payload: PasswordResetJwtPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<PasswordResetJwtPayload>(resetToken, {
+        secret: this.configService.get('JWT_ACCESS_SECRET', { infer: true }),
+      });
+    } catch {
+      throw new BadRequestException({
+        error: {
+          code: 'INVALID_RESET_TOKEN',
+          message: 'Lien de réinitialisation invalide ou expiré',
+        },
+      });
+    }
+
+    if (payload.purpose !== 'password_reset' || !payload.sub) {
+      throw new BadRequestException({
+        error: {
+          code: 'INVALID_RESET_TOKEN',
+          message: 'Lien de réinitialisation invalide ou expiré',
+        },
+      });
+    }
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user?.isActive) {
+      throw new BadRequestException({
+        error: {
+          code: 'INVALID_RESET_TOKEN',
+          message: 'Lien de réinitialisation invalide ou expiré',
+        },
+      });
+    }
+
+    const passwordHash = await argon2.hash(password);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      }),
+      this.prisma.refreshToken.deleteMany({ where: { userId: user.id } }),
+      this.prisma.passwordResetOtp.updateMany({
+        where: { userId: user.id, consumedAt: null },
+        data: { consumedAt: new Date() },
+      }),
+    ]);
+
+    await this.logsService.logActivity({
+      userId: user.id,
+      action: 'PASSWORD_RESET',
+      resource: 'auth',
+      ipAddress,
+    });
+
+    return { success: true };
   }
 
   private async createAccessToken(user: AuthUser) {

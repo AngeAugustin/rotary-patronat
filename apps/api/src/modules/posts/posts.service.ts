@@ -1,9 +1,12 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ContentReportTarget,
   NotificationType,
   PostKind,
   PostVisibility,
@@ -12,11 +15,14 @@ import {
 import {
   AuthUser,
   CreateCommentInput,
+  CreateContentReportInput,
   CreatePostInput,
+  PostComment,
   PostDetail,
   PostSummary,
   RoleCode,
   ROLE_HIERARCHY,
+  UpdatePostInput,
 } from '@rotary/shared-types';
 import { PrismaService } from '../../prisma/prisma.service';
 import { buildMeta, resolvePagination } from '../../common/utils/pagination';
@@ -81,6 +87,14 @@ export class PostsService {
           include: {
             author: true,
             _count: { select: { replies: true } },
+            replies: {
+              include: {
+                author: true,
+                _count: { select: { replies: true } },
+              },
+              orderBy: { createdAt: 'asc' },
+              take: 30,
+            },
           },
           orderBy: { createdAt: 'asc' },
           take: 50,
@@ -93,18 +107,7 @@ export class PostsService {
 
     return {
       ...this.toSummary(post, user.id),
-      comments: post.comments.map((c) => ({
-        id: c.id,
-        content: c.content,
-        author: {
-          id: c.author.id,
-          firstName: c.author.firstName,
-          lastName: c.author.lastName,
-        },
-        parentId: c.parentId,
-        replyCount: c._count.replies,
-        createdAt: c.createdAt.toISOString(),
-      })),
+      comments: post.comments.map((c) => this.toComment(c)),
     };
   }
 
@@ -112,29 +115,45 @@ export class PostsService {
     const kind = (input.kind as PostKind) ?? PostKind.MEMBER_POST;
     this.assertCanCreateKind(user, kind);
 
-    if (input.visibility === PostVisibility.COMMISSION && !input.commissionId) {
-      throw new ForbiddenException('Une commission est requise pour cette visibilité');
+    const visibility =
+      (input.visibility as PostVisibility) ?? PostVisibility.ALL_MEMBERS;
+    const commissionId =
+      visibility === PostVisibility.COMMISSION
+        ? input.commissionId || undefined
+        : undefined;
+
+    if (visibility === PostVisibility.COMMISSION && !commissionId) {
+      throw new BadRequestException('Une commission est requise pour cette visibilité');
     }
 
-    if (input.commissionId) {
-      await this.assertCommissionMember(user, input.commissionId);
+    if (commissionId) {
+      await this.assertCommissionMember(user, commissionId);
     }
+
+    if (input.repostOfId) {
+      const original = await this.getPostOrThrow(input.repostOfId);
+      await this.assertCanView(user, original);
+    }
+
+    const linkUrl = input.linkUrl?.trim() ? input.linkUrl.trim() : undefined;
+    const content = sanitizePlainText(input.content);
 
     const post = await this.prisma.post.create({
       data: {
         authorId: user.id,
         kind,
-        content: sanitizePlainText(input.content),
+        content,
         attachments: input.attachments ?? [],
-        linkUrl: input.linkUrl,
-        visibility: (input.visibility as PostVisibility) ?? PostVisibility.ALL_MEMBERS,
-        commissionId: input.commissionId,
+        linkUrl,
+        visibility,
+        commissionId,
         repostOfId: input.repostOfId,
       },
       include: this.summaryInclude(),
     });
 
     await this.notifyNewPost(post, user);
+    await this.notifyMentions(content, user, post.id);
     await this.logsService.logActivity({
       userId: user.id,
       action: 'POST_CREATE',
@@ -145,6 +164,144 @@ export class PostsService {
 
     this.realtimeService.emitFeedUpdate();
     return this.toSummary(post, user.id);
+  }
+
+  async update(
+    user: AuthUser,
+    postId: string,
+    input: UpdatePostInput,
+    ipAddress?: string,
+  ) {
+    const existing = await this.getPostOrThrow(postId);
+    if (existing.authorId !== user.id && !user.roles.includes(RoleCode.ADMIN)) {
+      throw new ForbiddenException('Vous ne pouvez modifier que vos publications');
+    }
+
+    const kind = (input.kind as PostKind | undefined) ?? existing.kind;
+    this.assertCanCreateKind(user, kind);
+
+    const visibility =
+      (input.visibility as PostVisibility | undefined) ?? existing.visibility;
+    let commissionId =
+      input.commissionId === ''
+        ? null
+        : input.commissionId === undefined
+          ? existing.commissionId
+          : input.commissionId;
+
+    if (visibility === PostVisibility.ALL_MEMBERS) {
+      commissionId = null;
+    }
+
+    if (visibility === PostVisibility.COMMISSION && !commissionId) {
+      throw new BadRequestException('Une commission est requise pour cette visibilité');
+    }
+
+    if (commissionId) {
+      await this.assertCommissionMember(user, commissionId);
+    }
+
+    const linkUrl =
+      input.linkUrl === undefined
+        ? existing.linkUrl
+        : input.linkUrl?.trim()
+          ? input.linkUrl.trim()
+          : null;
+
+    const content =
+      input.content !== undefined
+        ? sanitizePlainText(input.content)
+        : existing.content;
+
+    const post = await this.prisma.post.update({
+      where: { id: postId },
+      data: {
+        kind,
+        content,
+        attachments: input.attachments ?? undefined,
+        linkUrl,
+        visibility,
+        commissionId,
+      },
+      include: this.summaryInclude(),
+    });
+
+    await this.logsService.logActivity({
+      userId: user.id,
+      action: 'POST_UPDATE',
+      resource: 'posts',
+      resourceId: post.id,
+      ipAddress,
+    });
+
+    this.realtimeService.emitFeedUpdate();
+    return this.toSummary(post, user.id);
+  }
+
+  async deleteOwn(user: AuthUser, postId: string, ipAddress?: string) {
+    const existing = await this.getPostOrThrow(postId);
+    if (existing.authorId !== user.id && !user.roles.includes(RoleCode.ADMIN)) {
+      throw new ForbiddenException('Vous ne pouvez supprimer que vos publications');
+    }
+
+    await this.prisma.post.delete({ where: { id: postId } });
+    await this.logsService.logActivity({
+      userId: user.id,
+      action: 'POST_DELETE',
+      resource: 'posts',
+      resourceId: postId,
+      ipAddress,
+    });
+    this.realtimeService.emitFeedUpdate();
+    return { id: postId };
+  }
+
+  async report(
+    user: AuthUser,
+    input: CreateContentReportInput,
+    ipAddress?: string,
+  ) {
+    if (input.targetType === 'POST') {
+      const post = await this.getPostOrThrow(input.targetId);
+      await this.assertCanView(user, post);
+    } else {
+      const comment = await this.prisma.postComment.findUnique({
+        where: { id: input.targetId },
+        include: { post: { include: this.summaryInclude() } },
+      });
+      if (!comment) throw new NotFoundException('Commentaire introuvable');
+      await this.assertCanView(user, comment.post);
+    }
+
+    try {
+      const report = await this.prisma.contentReport.create({
+        data: {
+          reporterId: user.id,
+          targetType: input.targetType as ContentReportTarget,
+          targetId: input.targetId,
+          reason: input.reason ? sanitizePlainText(input.reason) : null,
+        },
+      });
+
+      await this.logsService.logActivity({
+        userId: user.id,
+        action: 'CONTENT_REPORT',
+        resource: input.targetType === 'POST' ? 'posts' : 'post_comments',
+        resourceId: input.targetId,
+        ipAddress,
+        metadata: { reportId: report.id },
+      });
+
+      return { id: report.id };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Vous avez déjà signalé ce contenu');
+      }
+      throw error;
+    }
   }
 
   async toggleLike(user: AuthUser, postId: string, ipAddress?: string) {
@@ -202,14 +359,35 @@ export class PostsService {
     const post = await this.getPostOrThrow(postId);
     await this.assertCanView(user, post);
 
+    if (input.parentId) {
+      const parent = await this.prisma.postComment.findUnique({
+        where: { id: input.parentId },
+      });
+      if (!parent || parent.postId !== postId) {
+        throw new BadRequestException('Commentaire parent invalide');
+      }
+    }
+
+    const content = sanitizePlainText(input.content);
+
     const comment = await this.prisma.postComment.create({
       data: {
         postId,
         authorId: user.id,
-        content: sanitizePlainText(input.content),
+        content,
         parentId: input.parentId,
       },
-      include: { author: true, _count: { select: { replies: true } } },
+      include: {
+        author: true,
+        _count: { select: { replies: true } },
+        replies: {
+          include: {
+            author: true,
+            _count: { select: { replies: true } },
+          },
+          take: 0,
+        },
+      },
     });
 
     if (post.authorId !== user.id) {
@@ -217,13 +395,14 @@ export class PostsService {
         userId: post.authorId,
         type: NotificationType.POST_COMMENT,
         title: `${user.firstName} ${user.lastName} a commenté votre publication`,
-        body: input.content.slice(0, 120),
+        body: content.slice(0, 120),
         resource: 'posts',
         resourceId: postId,
       });
       this.realtimeService.notifyUser(post.authorId, notification);
     }
 
+    await this.notifyMentions(content, user, postId);
     await this.logsService.logActivity({
       userId: user.id,
       action: 'POST_COMMENT',
@@ -233,43 +412,39 @@ export class PostsService {
     });
 
     this.realtimeService.emitFeedUpdate();
-
-    return {
-      id: comment.id,
-      content: comment.content,
-      author: {
-        id: comment.author.id,
-        firstName: comment.author.firstName,
-        lastName: comment.author.lastName,
-      },
-      parentId: comment.parentId,
-      replyCount: comment._count.replies,
-      createdAt: comment.createdAt.toISOString(),
-    };
+    return this.toComment(comment);
   }
 
-  private async buildFeedFilter(user: AuthUser, query: FeedQuery): Promise<Prisma.PostWhereInput> {
+  private async buildFeedFilter(
+    user: AuthUser,
+    query: FeedQuery,
+  ): Promise<Prisma.PostWhereInput> {
     const commissionIds = await this.getUserCommissionIds(user.id);
+    const isAdmin = user.roles.includes(RoleCode.ADMIN);
 
-    const visibilityFilter: Prisma.PostWhereInput = {
-      OR: [
-        { visibility: PostVisibility.ALL_MEMBERS },
-        {
-          visibility: PostVisibility.COMMISSION,
-          commissionId: { in: commissionIds },
-        },
-      ],
-    };
+    const visibilityFilter: Prisma.PostWhereInput = isAdmin
+      ? {}
+      : {
+          OR: [
+            { visibility: PostVisibility.ALL_MEMBERS },
+            {
+              visibility: PostVisibility.COMMISSION,
+              commissionId: { in: commissionIds },
+            },
+          ],
+        };
 
-    const filters: Prisma.PostWhereInput[] = [visibilityFilter];
+    const filters: Prisma.PostWhereInput[] = [];
+    if (Object.keys(visibilityFilter).length > 0) filters.push(visibilityFilter);
     if (query.kind) filters.push({ kind: query.kind });
     if (query.commissionId) filters.push({ commissionId: query.commissionId });
 
-    return { AND: filters };
+    return filters.length > 0 ? { AND: filters } : {};
   }
 
   private async assertCanView(user: AuthUser, post: PostWithRelations) {
     if (post.visibility === PostVisibility.ALL_MEMBERS) return;
+    if (user.roles.includes(RoleCode.ADMIN)) return;
 
     if (!post.commissionId) {
       throw new ForbiddenException('Publication non accessible');
@@ -284,8 +459,7 @@ export class PostsService {
       },
     });
 
-    const isAdmin = user.roles.includes(RoleCode.ADMIN);
-    if (!membership && !isAdmin) {
+    if (!membership) {
       throw new ForbiddenException('Publication réservée à la commission');
     }
   }
@@ -311,16 +485,22 @@ export class PostsService {
       },
     });
     if (!membership) {
-      throw new ForbiddenException('Vous n\'appartenez pas à cette commission');
+      throw new ForbiddenException("Vous n'appartenez pas à cette commission");
     }
   }
 
   private async notifyNewPost(post: PostWithRelations, author: AuthUser) {
+    const where: Prisma.UserWhereInput = {
+      isActive: true,
+      id: { not: author.id },
+    };
+
+    if (post.visibility === PostVisibility.COMMISSION && post.commissionId) {
+      where.commissions = { some: { commissionId: post.commissionId } };
+    }
+
     const members = await this.prisma.user.findMany({
-      where: {
-        isActive: true,
-        id: { not: author.id },
-      },
+      where,
       select: { id: true },
       take: 100,
     });
@@ -338,6 +518,45 @@ export class PostsService {
         resourceId: post.id,
       });
       this.realtimeService.notifyUser(member.id, notification);
+    }
+  }
+
+  private async notifyMentions(
+    content: string,
+    author: AuthUser,
+    postId: string,
+  ) {
+    const handles = [...content.matchAll(/@([A-Za-zÀ-ÿ'-]+(?:\s+[A-Za-zÀ-ÿ'-]+)?)/g)].map(
+      (m) => m[1].trim().toLowerCase(),
+    );
+    if (handles.length === 0) return;
+
+    const users = await this.prisma.user.findMany({
+      where: { isActive: true, id: { not: author.id } },
+      select: { id: true, firstName: true, lastName: true },
+      take: 500,
+    });
+
+    const mentionedIds = new Set<string>();
+    for (const handle of handles) {
+      const match = users.find((u) => {
+        const full = `${u.firstName} ${u.lastName}`.toLowerCase();
+        const first = u.firstName.toLowerCase();
+        return full === handle || first === handle;
+      });
+      if (match) mentionedIds.add(match.id);
+    }
+
+    for (const userId of mentionedIds) {
+      const notification = await this.notificationsService.create({
+        userId,
+        type: NotificationType.POST_MENTION,
+        title: `${author.firstName} ${author.lastName} vous a mentionné`,
+        body: content.slice(0, 120),
+        resource: 'posts',
+        resourceId: postId,
+      });
+      this.realtimeService.notifyUser(userId, notification);
     }
   }
 
@@ -365,6 +584,48 @@ export class PostsService {
       likes: true,
       _count: { select: { comments: true, likes: true } },
     } as const;
+  }
+
+  private toComment(comment: {
+    id: string;
+    content: string;
+    parentId: string | null;
+    createdAt: Date;
+    author: { id: string; firstName: string; lastName: string };
+    _count: { replies: number };
+    replies?: Array<{
+      id: string;
+      content: string;
+      parentId: string | null;
+      createdAt: Date;
+      author: { id: string; firstName: string; lastName: string };
+      _count: { replies: number };
+    }>;
+  }): PostComment {
+    return {
+      id: comment.id,
+      content: comment.content,
+      author: {
+        id: comment.author.id,
+        firstName: comment.author.firstName,
+        lastName: comment.author.lastName,
+      },
+      parentId: comment.parentId,
+      replyCount: comment._count.replies,
+      createdAt: comment.createdAt.toISOString(),
+      replies: comment.replies?.map((reply) => ({
+        id: reply.id,
+        content: reply.content,
+        author: {
+          id: reply.author.id,
+          firstName: reply.author.firstName,
+          lastName: reply.author.lastName,
+        },
+        parentId: reply.parentId,
+        replyCount: reply._count.replies,
+        createdAt: reply.createdAt.toISOString(),
+      })),
+    };
   }
 
   private toSummary(post: PostWithRelations, currentUserId: string): PostSummary {

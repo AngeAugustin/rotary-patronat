@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -15,7 +17,12 @@ import { CsrfGuard } from '../../common/guards/csrf.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PostsService } from './posts.service';
-import { CreatePostDto, CreateCommentDto } from './dto/create-post.dto';
+import {
+  CreateCommentDto,
+  CreateContentReportDto,
+  CreatePostDto,
+  UpdatePostDto,
+} from './dto/create-post.dto';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -52,6 +59,39 @@ export class PostsController {
     @Req() req: Request,
   ) {
     return this.postsService.create(user, dto, req.ip).then((data) => ({ data }));
+  }
+
+  @Post('reports')
+  @UseGuards(CsrfGuard)
+  report(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: CreateContentReportDto,
+    @Req() req: Request,
+  ) {
+    return this.postsService.report(user, dto, req.ip).then((data) => ({ data }));
+  }
+
+  @Patch(':id')
+  @UseGuards(CsrfGuard)
+  update(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePostDto,
+    @Req() req: Request,
+  ) {
+    return this.postsService
+      .update(user, id, dto, req.ip)
+      .then((data) => ({ data }));
+  }
+
+  @Delete(':id')
+  @UseGuards(CsrfGuard)
+  remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Req() req: Request,
+  ) {
+    return this.postsService.deleteOwn(user, id, req.ip).then((data) => ({ data }));
   }
 
   @Post(':id/like')

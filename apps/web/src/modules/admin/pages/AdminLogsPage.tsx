@@ -56,6 +56,8 @@ const ACTION_LABELS: Record<string, string> = {
   PROJECT_UPDATE: 'Modification projet',
   MODERATION_POST_DELETE: 'Modération publication',
   MODERATION_COMMENT_DELETE: 'Modération commentaire',
+  MODERATION_REPORT_DISMISS: 'Signalement ignoré',
+  CONTENT_REPORT: 'Signalement contenu',
   VOLUNTEERING_CREATE: 'Déclaration bénévolat',
 };
 

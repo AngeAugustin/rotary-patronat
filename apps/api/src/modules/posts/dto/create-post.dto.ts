@@ -5,6 +5,7 @@ import {
   IsString,
   IsUrl,
   IsUUID,
+  MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -39,7 +40,7 @@ export class CreatePostDto {
   attachments?: PostAttachmentDto[];
 
   @IsOptional()
-  @IsUrl()
+  @IsString()
   linkUrl?: string;
 
   @IsOptional()
@@ -55,6 +56,35 @@ export class CreatePostDto {
   repostOfId?: string;
 }
 
+export class UpdatePostDto {
+  @IsOptional()
+  @IsEnum(['MEMBER_POST', 'ANNOUNCEMENT', 'EVENT', 'COMMUNIQUE'])
+  kind?: PostKind;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  content?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PostAttachmentDto)
+  attachments?: PostAttachmentDto[];
+
+  @IsOptional()
+  @IsString()
+  linkUrl?: string | null;
+
+  @IsOptional()
+  @IsEnum(['ALL_MEMBERS', 'COMMISSION'])
+  visibility?: PostVisibility;
+
+  @IsOptional()
+  @IsUUID()
+  commissionId?: string | null;
+}
+
 export class CreateCommentDto {
   @IsString()
   @MinLength(1)
@@ -63,4 +93,17 @@ export class CreateCommentDto {
   @IsOptional()
   @IsUUID()
   parentId?: string;
+}
+
+export class CreateContentReportDto {
+  @IsEnum(['POST', 'COMMENT'])
+  targetType!: 'POST' | 'COMMENT';
+
+  @IsUUID()
+  targetId!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
 }

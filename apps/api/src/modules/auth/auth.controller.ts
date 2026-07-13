@@ -14,6 +14,9 @@ import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { VerifyResetOtpDto } from './dto/verify-reset-otp.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../../common/guards/roles.guard';
 import { CsrfGuard, generateCsrfToken, signCsrfToken } from '../../common/guards/csrf.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -69,6 +72,38 @@ export class AuthController {
         user: result.user,
       },
     };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
+  @UseGuards(CsrfGuard)
+  async forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: Request) {
+    const result = await this.authService.requestPasswordReset(dto.email, req.ip);
+    return { data: result };
+  }
+
+  @Post('verify-reset-otp')
+  @HttpCode(200)
+  @Throttle({ auth: { limit: 10, ttl: 60_000 } })
+  @UseGuards(CsrfGuard)
+  async verifyResetOtp(@Body() dto: VerifyResetOtpDto) {
+    const result = await this.authService.verifyResetOtp(dto.email, dto.code);
+    return { data: result };
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
+  @UseGuards(CsrfGuard)
+  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
+    const result = await this.authService.resetPassword(
+      dto.resetToken,
+      dto.password,
+      dto.confirmPassword,
+      req.ip,
+    );
+    return { data: result };
   }
 
   @Post('refresh')

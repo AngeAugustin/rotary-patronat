@@ -29,6 +29,7 @@ export const queryKeys = {
     logs: (page: number, action?: string) => ['admin', 'logs', page, action] as const,
     moderationPosts: (page: number) => ['admin', 'moderation', 'posts', page] as const,
     moderationComments: (page: number) => ['admin', 'moderation', 'comments', page] as const,
+    moderationReports: (page: number) => ['admin', 'moderation', 'reports', page] as const,
     membershipApplications: (page: number, status?: string) =>
       ['admin', 'membership', page, status] as const,
     membershipApplication: (id: string) => ['admin', 'membership', id] as const,

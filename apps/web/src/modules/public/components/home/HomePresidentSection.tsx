@@ -54,7 +54,7 @@ export function HomePresidentSection({
               {photo ? (
                 <img
                   src={photo}
-                  alt=""
+                  alt={name ? `Portrait de ${name}` : 'Portrait du Président'}
                   className="relative aspect-[4/5] w-full rounded-3xl object-cover shadow-lift"
                   loading="lazy"
                 />

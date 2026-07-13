@@ -7,6 +7,8 @@ interface NewsCardProps {
   article: NewsSummary;
   className?: string;
   layout?: 'default' | 'featured' | 'row';
+  /** Mise en avant visuelle soft (même format row). */
+  emphasis?: boolean;
 }
 
 function formatDate(date: string | null, style: 'long' | 'short' = 'long') {
@@ -18,9 +20,16 @@ function formatDate(date: string | null, style: 'long' | 'short' = 'long') {
   }).format(new Date(date));
 }
 
-export function NewsCard({ article, className, layout = 'default' }: NewsCardProps) {
+export function NewsCard({
+  article,
+  className,
+  layout = 'default',
+  emphasis = false,
+}: NewsCardProps) {
   if (layout === 'row') {
-    return <NewsRowCard article={article} className={className} />;
+    return (
+      <NewsRowCard article={article} className={className} emphasis={emphasis} />
+    );
   }
 
   const isFeatured = layout === 'featured';
@@ -98,22 +107,38 @@ export function NewsCard({ article, className, layout = 'default' }: NewsCardPro
 function NewsRowCard({
   article,
   className,
+  emphasis = false,
 }: {
   article: NewsSummary;
   className?: string;
+  emphasis?: boolean;
 }) {
   return (
     <article
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-neutral-100/90 bg-neutral-0/90 transition-[border-color,background-color,box-shadow] duration-300 hover:border-primary-200 hover:bg-neutral-0 hover:shadow-soft',
+        'group relative overflow-hidden rounded-xl border transition-[border-color,background-color,box-shadow] duration-300',
+        emphasis
+          ? 'border-primary-200/70 bg-gradient-to-r from-primary-50/90 via-neutral-0 to-neutral-0 shadow-soft hover:border-primary-300 hover:shadow-lift'
+          : 'border-neutral-100/90 bg-neutral-0/90 hover:border-primary-200 hover:bg-neutral-0 hover:shadow-soft',
         className,
       )}
     >
+      {emphasis && (
+        <div
+          className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary-400 to-primary-600"
+          aria-hidden
+        />
+      )}
       <Link
         to={`/nos-actualites/${article.slug}`}
         className="grid grid-cols-[5.5rem_1fr] gap-4 p-3 sm:grid-cols-[7.5rem_1fr_auto] sm:items-center sm:gap-5 sm:p-3.5"
       >
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-primary-50 sm:aspect-[5/4] sm:h-[4.75rem]">
+        <div
+          className={cn(
+            'relative aspect-square overflow-hidden rounded-lg bg-primary-50 sm:aspect-[5/4] sm:h-[4.75rem]',
+            emphasis && 'ring-1 ring-primary-200/60',
+          )}
+        >
           {article.coverImage ? (
             <img
               src={article.coverImage}
@@ -130,6 +155,11 @@ function NewsRowCard({
 
         <div className="min-w-0 self-center pr-1">
           <div className="flex flex-wrap items-center gap-2">
+            {emphasis && (
+              <span className="rounded bg-accent-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-800">
+                À la une
+              </span>
+            )}
             <span className="rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-800">
               {article.category.name}
             </span>
@@ -149,7 +179,12 @@ function NewsRowCard({
         </div>
 
         <span
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-100 bg-neutral-50 text-primary-600 transition-colors group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-800 sm:static"
+          className={cn(
+            'absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg border transition-colors sm:static',
+            emphasis
+              ? 'border-primary-200/70 bg-primary-50 text-primary-700 group-hover:border-primary-300 group-hover:bg-primary-100'
+              : 'border-neutral-100 bg-neutral-50 text-primary-600 group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-800',
+          )}
           aria-hidden
         >
           <ArrowUpRight className="h-3.5 w-3.5" />

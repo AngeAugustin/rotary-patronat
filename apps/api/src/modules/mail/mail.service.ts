@@ -5,6 +5,7 @@ import type { EnvConfig } from '../../config/env.validation';
 import { EMAIL_LOGO_CID, loadEmailLogoBase64 } from './email-assets';
 import { buildMembershipApplicationAcceptedEmail } from './templates/membership-application-accepted.email';
 import { buildMembershipApplicationReceivedEmail } from './templates/membership-application-received.email';
+import { buildPasswordResetOtpEmail } from './templates/password-reset-otp.email';
 import { buildUserCredentialsEmail } from './templates/user-credentials.email';
 
 @Injectable()
@@ -124,6 +125,56 @@ export class MailService {
     }
 
     this.logger.log(`E-mail d'acceptation d'adhésion envoyé à ${input.to}`);
+  }
+
+  async sendPasswordResetOtp(input: {
+    to: string;
+    firstName: string;
+    lastName: string;
+    code: string;
+    expiresInMinutes: number;
+  }) {
+    if (!this.resend || !this.fromAddress) {
+      this.logger.warn(
+        `E-mail OTP de réinitialisation non envoyé à ${input.to} (Resend non configuré).`,
+      );
+      return;
+    }
+
+    const includeLogo = Boolean(this.logoBase64);
+    const { subject, html, text } = buildPasswordResetOtpEmail({
+      firstName: input.firstName,
+      lastName: input.lastName,
+      code: input.code,
+      expiresInMinutes: input.expiresInMinutes,
+      includeLogo,
+    });
+
+    const { error } = await this.resend.emails.send({
+      from: this.fromAddress,
+      to: input.to,
+      subject,
+      html,
+      text,
+      attachments: includeLogo
+        ? [
+            {
+              filename: 'logo.png',
+              content: this.logoBase64!,
+              contentId: EMAIL_LOGO_CID,
+            },
+          ]
+        : undefined,
+    });
+
+    if (error) {
+      this.logger.error(
+        `Échec d'envoi de l'e-mail OTP de réinitialisation à ${input.to}: ${error.message}`,
+      );
+      return;
+    }
+
+    this.logger.log(`E-mail OTP de réinitialisation envoyé à ${input.to}`);
   }
 
   async sendUserCredentials(input: {

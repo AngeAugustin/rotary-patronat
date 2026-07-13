@@ -7,6 +7,8 @@ interface ActionCardProps {
   action: ActionSummary;
   className?: string;
   layout?: 'default' | 'featured' | 'row';
+  /** Mise en avant visuelle soft (même format row). */
+  emphasis?: boolean;
 }
 
 function formatDate(date: string, style: 'long' | 'short' = 'long') {
@@ -17,9 +19,16 @@ function formatDate(date: string, style: 'long' | 'short' = 'long') {
   }).format(new Date(date));
 }
 
-export function ActionCard({ action, className, layout = 'default' }: ActionCardProps) {
+export function ActionCard({
+  action,
+  className,
+  layout = 'default',
+  emphasis = false,
+}: ActionCardProps) {
   if (layout === 'row') {
-    return <ActionRowCard action={action} className={className} />;
+    return (
+      <ActionRowCard action={action} className={className} emphasis={emphasis} />
+    );
   }
 
   const isFeatured = layout === 'featured';
@@ -105,22 +114,38 @@ export function ActionCard({ action, className, layout = 'default' }: ActionCard
 function ActionRowCard({
   action,
   className,
+  emphasis = false,
 }: {
   action: ActionSummary;
   className?: string;
+  emphasis?: boolean;
 }) {
   return (
     <article
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-neutral-100/90 bg-neutral-0/90 transition-[border-color,background-color,box-shadow] duration-300 hover:border-primary-200 hover:bg-neutral-0 hover:shadow-soft',
+        'group relative overflow-hidden rounded-xl border transition-[border-color,background-color,box-shadow] duration-300',
+        emphasis
+          ? 'border-accent-200/70 bg-gradient-to-r from-accent-50/90 via-neutral-0 to-neutral-0 shadow-soft hover:border-accent-300 hover:shadow-lift'
+          : 'border-neutral-100/90 bg-neutral-0/90 hover:border-primary-200 hover:bg-neutral-0 hover:shadow-soft',
         className,
       )}
     >
+      {emphasis && (
+        <div
+          className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-accent-400 to-accent-500"
+          aria-hidden
+        />
+      )}
       <Link
         to={`/nos-actions/${action.slug}`}
         className="grid grid-cols-[5.5rem_1fr] gap-4 p-3 sm:grid-cols-[7.5rem_1fr_auto] sm:items-center sm:gap-5 sm:p-3.5"
       >
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-primary-50 sm:aspect-[5/4] sm:h-[4.75rem]">
+        <div
+          className={cn(
+            'relative aspect-square overflow-hidden rounded-lg bg-primary-50 sm:aspect-[5/4] sm:h-[4.75rem]',
+            emphasis && 'ring-1 ring-accent-200/60',
+          )}
+        >
           {action.coverImage ? (
             <img
               src={action.coverImage}
@@ -137,8 +162,8 @@ function ActionRowCard({
 
         <div className="min-w-0 self-center pr-1">
           <div className="flex flex-wrap items-center gap-2">
-            {action.featured && (
-              <span className="rounded bg-accent-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-800">
+            {(emphasis || action.featured) && (
+              <span className="rounded bg-accent-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-800">
                 À la une
               </span>
             )}
@@ -164,7 +189,12 @@ function ActionRowCard({
         </div>
 
         <span
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-100 bg-neutral-50 text-primary-600 opacity-100 transition-colors group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-800 sm:static sm:opacity-100"
+          className={cn(
+            'absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg border transition-colors sm:static sm:opacity-100',
+            emphasis
+              ? 'border-accent-200/70 bg-accent-50 text-accent-800 group-hover:border-accent-300 group-hover:bg-accent-100'
+              : 'border-neutral-100 bg-neutral-50 text-primary-600 group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-800',
+          )}
           aria-hidden
         >
           <ArrowUpRight className="h-3.5 w-3.5" />

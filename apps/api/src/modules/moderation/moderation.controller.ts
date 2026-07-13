@@ -21,6 +21,30 @@ import { ModerationService } from './moderation.service';
 export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
 
+  @Get('reports')
+  listReports(
+    @CurrentUser() user: AuthUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.moderationService.listReports(user, {
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
+    });
+  }
+
+  @Delete('reports/:id')
+  @UseGuards(CsrfGuard)
+  dismissReport(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Req() req: Request,
+  ) {
+    return this.moderationService
+      .dismissReport(user, id, req.ip)
+      .then((data) => ({ data }));
+  }
+
   @Get('posts')
   listPosts(
     @CurrentUser() user: AuthUser,

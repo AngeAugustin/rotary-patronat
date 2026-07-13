@@ -1,4 +1,5 @@
-import { Eye, Heart, Landmark, Target, Users } from 'lucide-react';
+import { Eye, Target } from 'lucide-react';
+import type { ExecutiveMember } from '@rotary/shared-types';
 import { PageHero } from '../components/PageHero';
 import { PageSection } from '../components/PageSection';
 import { ClubHistoryTimeline } from '../components/ClubHistoryTimeline';
@@ -8,10 +9,222 @@ import { useClubProfile } from '../hooks/use-public-content';
 import { cn } from '@/lib/utils';
 import { publicContainerClass } from '../constants/layout';
 
-const valueIcons = [Heart, Target, Users, Eye, Landmark];
-
 const CLUB_HERO_IMAGE =
-  'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1200&q=80';
+  'https://i.postimg.cc/90x6v9jn/PHOTO-2026-07-06-10-12-16.jpg';
+
+function isPastPresidentRole(role: string) {
+  return /past president/i.test(role);
+}
+
+function PortraitImage({
+  name,
+  photo,
+  className,
+  initialClassName,
+}: {
+  name: string;
+  photo?: string | null;
+  className?: string;
+  initialClassName?: string;
+}) {
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={`Portrait de ${name}`}
+        className={cn('h-full w-full object-cover object-top', className)}
+        loading="lazy"
+      />
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200',
+        className,
+      )}
+    >
+      <span
+        className={cn(
+          'font-display font-semibold text-primary-400/80',
+          initialClassName,
+        )}
+      >
+        {name.charAt(0)}
+      </span>
+    </div>
+  );
+}
+
+function OfficerTile({
+  member,
+  className,
+}: {
+  member: ExecutiveMember;
+  className?: string;
+}) {
+  return (
+    <article className={cn('group', className)}>
+      <div className="relative overflow-hidden rounded-2xl bg-neutral-100 shadow-soft">
+        <div className="aspect-[4/5]">
+          <PortraitImage
+            name={member.name}
+            photo={member.photo}
+            className="transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+            initialClassName="text-5xl"
+          />
+        </div>
+      </div>
+      <div className="mt-5 space-y-1.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-700">
+          {member.role}
+        </p>
+        <h3 className="font-display text-xl font-semibold tracking-tight text-primary-900">
+          {member.name}
+        </h3>
+      </div>
+    </article>
+  );
+}
+
+function ExecutiveBureau({ members }: { members: ExecutiveMember[] }) {
+  const president = members.find((m) => m.role === 'Président');
+  const officers = members.filter(
+    (m) => m.role !== 'Président' && !isPastPresidentRole(m.role),
+  );
+  const pastPresidents = members.filter((m) => isPastPresidentRole(m.role));
+  const officersTop = officers.slice(0, 3);
+  const officersBottom = officers.slice(3);
+
+  return (
+    <div className="mt-14 space-y-20 lg:space-y-24">
+      {president && (
+        <ScrollReveal>
+          <div className="relative overflow-hidden rounded-[1.75rem] bg-primary-900 text-neutral-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700" />
+            <div
+              className="absolute -right-20 top-0 h-72 w-72 rounded-full bg-accent-500/15 blur-3xl"
+              aria-hidden
+            />
+            <div
+              className="absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-primary-500/25 blur-3xl"
+              aria-hidden
+            />
+
+            <div className="relative grid items-stretch lg:grid-cols-12">
+              <div className="relative lg:col-span-5">
+                <div className="aspect-[4/5] sm:aspect-[5/6] lg:aspect-auto lg:h-full lg:min-h-[28rem]">
+                  <PortraitImage
+                    name={president.name}
+                    photo={president.photo}
+                    className="lg:absolute lg:inset-0"
+                    initialClassName="text-7xl text-primary-300/50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-end px-6 py-10 sm:px-10 sm:py-12 lg:col-span-7 lg:px-14 lg:py-16">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-300">
+                  {president.role}
+                </p>
+                <div className="mt-5 h-px w-14 bg-accent-500/80" aria-hidden />
+                <h3 className="mt-6 font-display text-3xl font-semibold tracking-tight text-neutral-0 sm:text-4xl lg:text-5xl lg:leading-[1.1]">
+                  {president.name}
+                </h3>
+                {president.bio && (
+                  <p className="mt-5 max-w-md text-base leading-relaxed text-primary-100/90">
+                    {president.bio}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
+
+      {officers.length > 0 && (
+        <div>
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-neutral-200" aria-hidden />
+            <p className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+              Composition du bureau
+            </p>
+            <div className="h-px flex-1 bg-neutral-200" aria-hidden />
+          </div>
+
+          <ul className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-14">
+            {officersTop.map((member, i) => (
+              <li key={member.id}>
+                <ScrollReveal delay={i * 0.05}>
+                  <OfficerTile member={member} />
+                </ScrollReveal>
+              </li>
+            ))}
+          </ul>
+
+          {officersBottom.length > 0 && (
+            <ul
+              className={cn(
+                'mt-10 grid gap-10 sm:grid-cols-2 lg:gap-x-8 lg:gap-y-14',
+                officersBottom.length === 2 &&
+                  'lg:mx-auto lg:max-w-3xl lg:grid-cols-2',
+                officersBottom.length === 1 && 'mx-auto max-w-sm',
+              )}
+            >
+              {officersBottom.map((member, i) => (
+                <li key={member.id}>
+                  <ScrollReveal delay={(officersTop.length + i) * 0.05}>
+                    <OfficerTile member={member} />
+                  </ScrollReveal>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {pastPresidents.length > 0 && (
+        <div className="rounded-[1.75rem] border border-neutral-100 bg-neutral-0/70 px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+              Continuité
+            </p>
+            <h3 className="mt-2 font-display text-2xl font-semibold tracking-tight text-primary-900">
+              Ancienne présidence
+            </h3>
+          </div>
+
+          <ul className="mt-10 grid gap-8 sm:grid-cols-2 lg:gap-12">
+            {pastPresidents.map((member, i) => (
+              <li key={member.id}>
+                <ScrollReveal delay={i * 0.05}>
+                  <div className="flex items-center gap-5 sm:gap-6">
+                    <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-neutral-100 shadow-soft sm:h-36 sm:w-36">
+                      <PortraitImage
+                        name={member.name}
+                        photo={member.photo}
+                        initialClassName="text-4xl"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-700">
+                        {member.role}
+                      </p>
+                      <h4 className="mt-2 font-display text-xl font-semibold tracking-tight text-primary-900 sm:text-2xl">
+                        {member.name}
+                      </h4>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ClubPage() {
   const { data, isLoading, isError } = useClubProfile();
@@ -80,27 +293,37 @@ export function ClubPage() {
         </div>
       </PageSection>
 
-      <PageSection tone="accent">
-        <SectionHeader
-          align="left"
-          title="Nos valeurs"
-          description="Les principes qui guident chacune de nos actions."
-          className="mx-0 max-w-2xl text-left"
-        />
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data.values.map((value, i) => {
-            const Icon = valueIcons[i % valueIcons.length];
-            return (
-              <ScrollReveal key={value} delay={i * 0.05}>
-                <div className="flex items-start gap-4 rounded-2xl border border-white/60 bg-neutral-0/80 p-6 shadow-soft backdrop-blur-sm">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-700 text-neutral-0">
-                    <Icon className="h-5 w-5" aria-hidden />
+      <PageSection tone="muted">
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16 lg:items-start">
+          <SectionHeader
+            align="left"
+            eyebrow="Fondements"
+            title="Nos valeurs"
+            description="Les principes qui guident chacune de nos actions."
+            className="mx-0 max-w-md text-left lg:col-span-4 lg:sticky lg:top-28"
+          />
+
+          <ul className="lg:col-span-8">
+            {data.values.map((value, i) => (
+              <li key={value}>
+                <ScrollReveal delay={i * 0.04}>
+                  <div
+                    className={cn(
+                      'group flex items-baseline gap-6 py-6 sm:gap-8 sm:py-7',
+                      i < data.values.length - 1 && 'border-b border-neutral-200/80',
+                    )}
+                  >
+                    <span className="w-8 shrink-0 font-display text-sm font-semibold tabular-nums tracking-wide text-primary-300 transition-colors group-hover:text-accent-500 sm:w-10">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <p className="font-display text-xl font-semibold tracking-tight text-primary-900 sm:text-2xl">
+                      {value}
+                    </p>
                   </div>
-                  <p className="font-medium text-primary-900">{value}</p>
-                </div>
-              </ScrollReveal>
-            );
-          })}
+                </ScrollReveal>
+              </li>
+            ))}
+          </ul>
         </div>
       </PageSection>
 
@@ -115,48 +338,19 @@ export function ClubPage() {
         </ScrollReveal>
       </PageSection>
 
-      <PageSection>
+      <PageSection tone="muted">
         <SectionHeader
           align="left"
           eyebrow="Gouvernance"
           title="Bureau exécutif"
-          className="mx-0 max-w-none"
+          description="L’équipe qui anime et représente le club."
+          className="mx-0 max-w-2xl text-left"
         />
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {data.executive.map((member, i) => (
-            <ScrollReveal key={member.id} delay={i * 0.05}>
-              <article className="group overflow-hidden rounded-3xl border border-neutral-100 bg-neutral-0 shadow-soft transition-shadow hover:shadow-lift">
-                <div className="relative aspect-square overflow-hidden bg-primary-50">
-                  {member.photo ? (
-                    <img
-                      src={member.photo}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center font-display text-5xl font-bold text-primary-200">
-                      {member.name.charAt(0)}
-                    </div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary-900/80 to-transparent p-4 pt-12">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-accent-300">
-                      {member.role}
-                    </p>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-display text-lg font-semibold text-primary-900">
-                    {member.name}
-                  </h3>
-                </div>
-              </article>
-            </ScrollReveal>
-          ))}
-        </div>
+
+        <ExecutiveBureau members={data.executive} />
       </PageSection>
 
-      <PageSection tone="muted">
+      <PageSection>
         <SectionHeader
           align="left"
           title="Commissions"
