@@ -68,9 +68,14 @@ async function apiRequestOnce<T>(
   const isMutation = method !== 'GET' && method !== 'HEAD';
 
   const requestHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(headers as Record<string, string>),
   };
+
+  // Avoid Content-Type: application/json on body-less mutations (DELETE) —
+  // some parsers reject an empty JSON body and the request fails silently.
+  if (body !== undefined) {
+    requestHeaders['Content-Type'] = 'application/json';
+  }
 
   if (!skipAuth && accessToken) {
     requestHeaders.Authorization = `Bearer ${accessToken}`;
@@ -86,7 +91,7 @@ async function apiRequestOnce<T>(
     method,
     headers: requestHeaders,
     credentials: 'include',
-    body: body ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   const json = await response.json();

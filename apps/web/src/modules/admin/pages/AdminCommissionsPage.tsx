@@ -432,8 +432,14 @@ export function AdminCommissionsPage() {
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        onClose={() => !deleteMutation.isPending && setDeleteTarget(null)}
-        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        onClose={() => {
+          if (deleteMutation.isPending) return;
+          setDeleteTarget(null);
+          deleteMutation.reset();
+        }}
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+        }}
         title="Supprimer cette commission ?"
         description={
           deleteTarget
@@ -442,6 +448,7 @@ export function AdminCommissionsPage() {
         }
         confirmLabel="Supprimer"
         confirmPending={deleteMutation.isPending}
+        error={deleteMutation.isError ? deleteMutation.error.message : null}
         destructive
       />
     </div>

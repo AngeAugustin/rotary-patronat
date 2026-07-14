@@ -21,7 +21,6 @@ const socialIcons: Record<string, typeof Facebook> = {
 export function HomePage() {
   const { data, isLoading, isError } = useHomepage();
   const featuredActions = data?.featuredActions ?? [];
-  const [heroAction, ...otherActions] = featuredActions;
 
   return (
     <>
@@ -40,7 +39,7 @@ export function HomePage() {
         photo={data?.presidentPhoto}
       />
 
-      {/* Actions — grille bento */}
+      {/* Actions */}
       <section className="relative overflow-hidden bg-neutral-50 py-20 lg:py-28">
         <div
           className="absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-100/60 blur-3xl"
@@ -56,33 +55,22 @@ export function HomePage() {
             className="mx-0 max-w-none"
           />
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-12">
-            {isLoading ? (
-              <>
-                <ActionCardSkeleton className="lg:col-span-7" />
-                <div className="grid gap-6 lg:col-span-5">
-                  <ActionCardSkeleton />
-                  <ActionCardSkeleton />
-                </div>
-              </>
-            ) : heroAction ? (
-              <>
-                <ScrollReveal className="lg:col-span-7">
-                  <ActionCard action={heroAction} layout="featured" className="h-full" />
-                </ScrollReveal>
-                <div className="grid gap-6 lg:col-span-5">
-                  {otherActions.slice(0, 2).map((action, index) => (
-                    <ScrollReveal key={action.id} delay={index * 0.08}>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {isLoading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <ActionCardSkeleton key={i} />
+                ))
+              : featuredActions.length > 0
+                ? featuredActions.slice(0, 3).map((action, index) => (
+                    <ScrollReveal key={action.id} delay={index * 0.06}>
                       <ActionCard action={action} className="h-full" />
                     </ScrollReveal>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="lg:col-span-12 text-center text-neutral-700">
-                Aucune action mise en avant pour le moment.
-              </p>
-            )}
+                  ))
+                : (
+                  <p className="sm:col-span-2 lg:col-span-3 text-center text-neutral-700">
+                    Aucune action mise en avant pour le moment.
+                  </p>
+                )}
           </div>
         </div>
       </section>

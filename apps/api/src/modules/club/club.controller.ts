@@ -27,7 +27,7 @@ export class ClubController {
     const profile = await this.clubService.getProfile();
     const [featuredActions, recentNews, upcomingMeetings] = await Promise.all([
       this.actionsService.findFeatured(3),
-      this.newsService.findRecent(3),
+      this.newsService.findRecent(4),
       this.clubService.getUpcomingMeetings(3),
     ]);
 

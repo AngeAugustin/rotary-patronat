@@ -186,16 +186,6 @@ export class ProjectsService {
     const existing = await this.getProjectOrThrow(id);
     await this.assertCanManage(user, existing);
 
-    if (existing.status !== ProjectStatus.PLANNED) {
-      throw new BadRequestException({
-        error: {
-          code: 'PROJECT_NOT_DELETABLE',
-          message:
-            'Seuls les projets au statut « Prévu » peuvent être supprimés',
-        },
-      });
-    }
-
     await this.prisma.project.delete({ where: { id } });
 
     await this.logsService.logActivity({

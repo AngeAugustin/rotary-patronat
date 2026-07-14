@@ -1,7 +1,10 @@
-import { Quote } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Quote } from 'lucide-react';
 import { ScrollReveal } from '../ScrollReveal';
 import { SectionHeader } from '../SectionHeader';
+import { Button } from '@/components/ui/button';
 import { publicContainerClass } from '../../constants/layout';
+import { CLUB_PRESIDENT_PATH } from '../../constants/club-president';
 import { cn } from '@/lib/utils';
 
 interface HomePresidentSectionProps {
@@ -26,7 +29,7 @@ export function HomePresidentSection({
       <SectionHeader
         align="left"
         eyebrow="Mot du Président"
-        title="Servir plus, servir mieux"
+        title="Créer un Impact Durable"
         className="mx-0 max-w-2xl text-left"
       />
 
@@ -75,14 +78,22 @@ export function HomePresidentSection({
               <p className="relative text-xl leading-relaxed text-neutral-700 md:text-2xl md:leading-relaxed">
                 {message}
               </p>
-              <footer className="mt-8 flex items-center gap-4 border-t border-neutral-100 pt-8">
-                <div className="h-px flex-1 bg-gradient-to-r from-accent-500 to-transparent" />
-                <div className="text-right">
-                  <cite className="not-italic font-semibold text-primary-900">
-                    {name}
-                  </cite>
-                  <p className="text-sm text-neutral-400">{title}</p>
+              <footer className="mt-8 space-y-6 border-t border-neutral-100 pt-8">
+                <div className="flex items-center gap-4">
+                  <div className="h-px flex-1 bg-gradient-to-r from-accent-500 to-transparent" />
+                  <div className="text-right">
+                    <cite className="not-italic font-semibold text-primary-900">
+                      {name}
+                    </cite>
+                    <p className="text-sm text-neutral-400">{title}</p>
+                  </div>
                 </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={CLUB_PRESIDENT_PATH}>
+                    Lire plus
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  </Link>
+                </Button>
               </footer>
             </blockquote>
           </div>

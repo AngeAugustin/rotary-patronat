@@ -17,9 +17,15 @@ const IMG = {
   communication: 'https://i.postimg.cc/V6HyhMwV/PHOTO-2026-07-06-09-02-04-Copie.jpg',
   pastPresident: 'https://i.postimg.cc/QtzPm3kL/PHOTO-2026-07-06-09-13-27.jpg',
   intermediatePastPresident: 'https://i.postimg.cc/CL8yvzQf/PHOTO-2026-07-06-09-02-04-%282%29-Copie.jpg',
-  gallery1: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80',
-  gallery2: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80',
-  gallery3: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=80',
+  imane: 'https://i.postimg.cc/Y2g2NzT4/Capture-d-ecran-2026-07-14-094337.png',
+  marlene: 'https://i.postimg.cc/fTfwpTwx/Capture-d-ecran-2026-07-14-094326.png',
+  cherifath: 'https://i.postimg.cc/SRWyymcm/Capture-d-ecran-2026-07-14-094352.png',
+  gallery1: 'https://i.postimg.cc/gjnY11Dd/Aude-Ken-Prod-Studio-189.jpg',
+  gallery2: 'https://i.postimg.cc/FHt9nWkZ/Aude-Ken-Prod-Studio-148.jpg',
+  gallery3: 'https://i.postimg.cc/xdn99XRP/Aude-Ken-Prod-Studio-143.jpg',
+  gallery4: 'https://i.postimg.cc/hj3n8pq1/Aude-Ken-Prod-Studio-132.jpg',
+  gallery5: 'https://i.postimg.cc/T3X6cKZR/Aude-Ken-Prod-Studio-111.jpg',
+  gallery6: 'https://i.postimg.cc/k4D35KtD/Aude-Ken-Prod-Studio-73.jpg',
 };
 
 async function seedRolesAndAdmin() {
@@ -292,38 +298,73 @@ async function seedPhase3Members() {
 }
 
 async function seedClubContent() {
+  const clubHistory =
+    "C'est le 2 juin 2025 qu'est née une nouvelle force rotarienne à Cotonou. Sous l'impulsion du Rotary Club de Cotonou le Nautile et la supervision bienveillante de l'IPP Moutawakilou ADEBO, le Rotary Club Satellite de Cotonou le Nautile PATRONAT a vu le jour au sein du District 9103, sous la gouvernance de Spéro HOUNKPE. Baptisé dans l'esprit du thème « La Magie du Rotary », le club a confié ses premiers pas à sa Présidente Fondatrice, Christiane HOUNSOU, qui a structuré les commissions et jeté les fondations du Plan Stratégique 2025-2030.";
+
+  const clubVision =
+    "Être un club dynamique et inspirant, où les membres s'épanouissent personnellement et professionnellement grâce à un réseau solide de soutien et d'opportunités, tout en contribuant positivement à leur communauté et au monde.";
+
+  const riPresident = {
+    riPresidentName: 'Olayinka Hakeem BABALOLA',
+    riPresidentTitle: 'Président du Rotary International',
+    riPresidentBio:
+      "Membre du Rotary depuis 1994, après un parcours débuté au Rotaract en 1984, Olayinka Hakeem BABALOLA a occupé de nombreuses responsabilités au sein du Rotary International, dont celles de Gouverneur de District, Administrateur et Vice-Président. Ingénieur et entrepreneur, ancien dirigeant de Shell PLC, il a fondé Riviera Technical Services Ltd. ainsi que Lead and Change Consulting. Avec son épouse Preba Babalola, ils sont Major Donors de la Fondation Rotary et membres de l'Arch Klumph Society.",
+    riPresidentMessage:
+      "« Le Rotary est une force unique capable de transformer des vies en réunissant des femmes et des hommes déterminés à servir leurs communautés et le monde. Ensemble, nous pouvons renforcer notre impact, promouvoir la paix, soutenir le développement humain et poursuivre notre engagement envers un avenir meilleur pour tous », déclare M. Babalola. « Je suis honoré de servir en tant que président du Rotary International et de poursuivre cette mission qui unit les peuples au-delà des frontières, des cultures et des générations. »",
+    riPresidentPhoto: 'https://www.adiac-congo.com/sites/default/files/img-20260701-wa0021_1.jpg',
+  };
+
+  const clubPresidentTeaser =
+    "C'est avec une profonde humilité et une immense fierté que je prends la tête de notre Rotary Club Satellite Passeport de Cotonou Le Nautile PATRONAT pour le mandat 2026-2027.";
+
   await prisma.clubProfile.upsert({
     where: { id: 'club-profile' },
     update: {
-      presidentName: 'Regis SEDAGBANDE',
+      history: clubHistory,
+      vision: clubVision,
+      ...riPresident,
+      presidentName: 'Régis SEDAGBANDE',
+      presidentTitle: 'Président du club',
       presidentPhoto: IMG.president,
-      presidentMessage:
-        'Chers prospects, bienvenue sur la plateforme digitale du Rotary Club Cotonou Le Nautile Patronat. Notre ambition est de faire rayonner nos actions et de renforcer les liens entre nos membres et la société civile. Ensemble, servons plus, servons mieux.',
+      presidentMessage: clubPresidentTeaser,
     },
     create: {
       id: 'club-profile',
-      history:
-        'Fondé à Cotonou, le Rotary Club Le Nautile Patronat incarne l\'engagement des professionnels béninois au service de leur communauté. Depuis sa création, le club a mené des actions concrètes dans les domaines de l\'éducation, de la santé et de l\'environnement.',
-      vision:
-        'Un Bénin où chaque citoyen a accès aux opportunités nécessaires pour s\'épanouir, porté par un réseau de leaders engagés.',
+      history: clubHistory,
+      vision: clubVision,
       mission:
         'Servir les communautés locales par des actions durables, développer l\'amitié professionnelle et promouvoir les idéaux du Rotary.',
       values: ['Intégrité', 'Service', 'Leadership', 'Diversité', 'Excellence'],
       organization:
         'Le club est structuré autour d\'un bureau exécutif et de commissions thématiques. Chaque membre contribue activement aux projets selon ses compétences et sa commission d\'appartenance.',
-      presidentMessage:
-        'Chers prospects, bienvenue sur la plateforme digitale du Rotary Club Cotonou Le Nautile Patronat. Notre ambition est de faire rayonner nos actions et de renforcer les liens entre nos membres et la société civile. Ensemble, servons plus, servons mieux.',
-      presidentName: 'Regis SEDAGBANDE',
+      presidentMessage: clubPresidentTeaser,
+      presidentName: 'Régis SEDAGBANDE',
       presidentTitle: 'Président du club',
       presidentPhoto: IMG.president,
+      ...riPresident,
     },
   });
 
   const executives = [
-    { name: 'Regis SEDAGBANDE', role: 'Président', photo: IMG.president, sortOrder: 1 },
-    { name: 'Imane SAGBOHAN', role: 'Secrétaire Général', sortOrder: 2 },
-    { name: 'Marlène CAKPO-CHICHI', role: 'Trésorière Générale', sortOrder: 3 },
-    { name: 'Chérifath TINIKOWA', role: 'Protocole', sortOrder: 4 },
+    { name: 'Régis SEDAGBANDE', role: 'Président', photo: IMG.president, sortOrder: 1 },
+    {
+      name: 'Imane SAGBOHAN',
+      role: 'Secrétaire Général & Président Élu',
+      photo: IMG.imane,
+      sortOrder: 2,
+    },
+    {
+      name: 'Marlène CAKPO-CHICHI',
+      role: 'Trésorière Générale & Présidente Nommée',
+      photo: IMG.marlene,
+      sortOrder: 3,
+    },
+    {
+      name: 'Chérifath KOTCHOFFA',
+      role: 'Protocole',
+      photo: IMG.cherifath,
+      sortOrder: 4,
+    },
     {
       name: 'Ramby Singh',
       role: 'Protocole Adjoint',
@@ -332,7 +373,7 @@ async function seedClubContent() {
     },
     {
       name: 'Augustin FACHEHOUN',
-      role: "Président de la Communication et de l'Image Publique",
+      role: 'Secrétaire Adjoint',
       photo: IMG.communication,
       sortOrder: 6,
     },
@@ -380,9 +421,12 @@ async function seedClubContent() {
   await prisma.galleryImage.deleteMany();
   await prisma.galleryImage.createMany({
     data: [
-      { url: IMG.gallery1, caption: 'Assemblée générale 2025', sortOrder: 1 },
-      { url: IMG.gallery2, caption: 'Projet éducatif à Porto-Novo', sortOrder: 2 },
-      { url: IMG.gallery3, caption: 'Cérémonie de remise de kits scolaires', sortOrder: 3 },
+      { url: IMG.gallery1, caption: null, sortOrder: 1 },
+      { url: IMG.gallery2, caption: null, sortOrder: 2 },
+      { url: IMG.gallery3, caption: null, sortOrder: 3 },
+      { url: IMG.gallery4, caption: null, sortOrder: 4 },
+      { url: IMG.gallery5, caption: null, sortOrder: 5 },
+      { url: IMG.gallery6, caption: null, sortOrder: 6 },
     ],
   });
 
@@ -390,54 +434,21 @@ async function seedClubContent() {
   await prisma.clubTimelineEvent.createMany({
     data: [
       {
-        year: 2019,
+        year: 2025,
         title: 'Naissance du club',
         description:
-          'Création du Rotary Club Cotonou Le Nautile Patronat en tant que Club Satellite Passeport, porté par une poignée de professionnels engagés à Cotonou.',
+          "Le 2 juin 2025, sous l'impulsion du Rotary Club de Cotonou le Nautile et la supervision de l'IPP Moutawakilou ADEBO, le Rotary Club Satellite de Cotonou le Nautile PATRONAT voit le jour au sein du District 9103, sous la gouvernance de Spéro HOUNKPE.",
         imageUrl: IMG.hero,
         highlight: true,
         sortOrder: 1,
       },
       {
-        year: 2020,
-        title: 'Premières actions locales',
+        year: 2025,
+        title: 'Fondations & commissions',
         description:
-          'Lancement des premières initiatives de solidarité dans les quartiers de Cotonou, marquant le début de notre engagement communautaire concret.',
-        imageUrl: IMG.action1,
-        sortOrder: 2,
-      },
-      {
-        year: 2021,
-        title: 'Structuration des commissions',
-        description:
-          'Mise en place des commissions thématiques pour organiser les actions du club autour de l\'action sociale, de l\'environnement et de l\'éducation.',
+          "Sous la Présidente Fondatrice Christiane HOUNSOU et dans l'esprit du thème « La Magie du Rotary », le club structure ses commissions et pose les bases du Plan Stratégique 2025-2030.",
         imageUrl: IMG.gallery2,
-        sortOrder: 3,
-      },
-      {
-        year: 2022,
-        title: 'Rayonnement Rotary',
-        description:
-          'Participation active aux événements du District et renforcement des échanges avec d\'autres clubs Rotary au Bénin et en Afrique de l\'Ouest.',
-        imageUrl: IMG.news1,
-        sortOrder: 4,
-      },
-      {
-        year: 2023,
-        title: 'Projets à fort impact',
-        description:
-          'Déploiement de projets éducatifs et humanitaires touchant des centaines de bénéficiaires dans la région de Cotonou et au-delà.',
-        imageUrl: IMG.action2,
-        highlight: true,
-        sortOrder: 5,
-      },
-      {
-        year: 2024,
-        title: 'Consolidation du bureau',
-        description:
-          'Renforcement de la gouvernance interne, élargissement du bureau exécutif et montée en puissance des commissions.',
-        imageUrl: IMG.gallery1,
-        sortOrder: 6,
+        sortOrder: 2,
       },
       {
         year: 2025,
@@ -446,7 +457,7 @@ async function seedClubContent() {
           'Lancement de la plateforme digitale du club pour centraliser la vie associative, valoriser nos actions et faciliter le recrutement de nouveaux membres.',
         imageUrl: IMG.gallery3,
         highlight: true,
-        sortOrder: 7,
+        sortOrder: 3,
       },
     ],
   });

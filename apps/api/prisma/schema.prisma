@@ -294,17 +294,22 @@ model Meeting {
 }
 
 model ClubProfile {
-  id               String   @id @default("club-profile")
-  history          String   @db.Text
-  vision           String   @db.Text
-  mission          String   @db.Text
-  values           Json
-  organization     String   @db.Text
-  presidentMessage String   @db.Text
-  presidentName    String
-  presidentTitle   String
-  presidentPhoto   String?
-  updatedAt        DateTime @updatedAt
+  id                 String   @id @default("club-profile")
+  history            String   @db.Text
+  vision             String   @db.Text
+  mission            String   @db.Text
+  values             Json
+  organization       String   @db.Text
+  presidentMessage   String   @db.Text
+  presidentName      String
+  presidentTitle     String
+  presidentPhoto     String?
+  riPresidentName    String?
+  riPresidentTitle   String?
+  riPresidentBio     String?  @db.Text
+  riPresidentMessage String?  @db.Text
+  riPresidentPhoto   String?
+  updatedAt          DateTime @updatedAt
 
   @@map("club_profile")
 }

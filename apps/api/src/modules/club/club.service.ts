@@ -32,6 +32,11 @@ export class ClubService {
       presidentName: profile.presidentName,
       presidentTitle: profile.presidentTitle,
       presidentPhoto: profile.presidentPhoto,
+      riPresidentName: profile.riPresidentName,
+      riPresidentTitle: profile.riPresidentTitle,
+      riPresidentBio: profile.riPresidentBio,
+      riPresidentMessage: profile.riPresidentMessage,
+      riPresidentPhoto: profile.riPresidentPhoto,
       executive: executive.map((m) => ({
         id: m.id,
         name: m.name,

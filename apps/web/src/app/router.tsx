@@ -18,6 +18,21 @@ const HomePage = lazy(() =>
 const ClubPage = lazy(() =>
   import('@/modules/public/pages/ClubPage').then((m) => ({ default: m.ClubPage })),
 );
+const ClubPresidentPage = lazy(() =>
+  import('@/modules/public/pages/ClubPresidentPage').then((m) => ({
+    default: m.ClubPresidentPage,
+  })),
+);
+const PublicCommissionDetailPage = lazy(() =>
+  import('@/modules/public/pages/PublicCommissionDetailPage').then((m) => ({
+    default: m.PublicCommissionDetailPage,
+  })),
+);
+const RiPresidentObjectivesPage = lazy(() =>
+  import('@/modules/public/pages/RiPresidentObjectivesPage').then((m) => ({
+    default: m.RiPresidentObjectivesPage,
+  })),
+);
 const ActionsPage = lazy(() =>
   import('@/modules/public/pages/ActionsPage').then((m) => ({ default: m.ActionsPage })),
 );
@@ -210,6 +225,15 @@ export function AppRouter() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/le-club" element={<ClubPage />} />
+            <Route path="/le-club/president" element={<ClubPresidentPage />} />
+            <Route
+              path="/le-club/commissions/:slug"
+              element={<PublicCommissionDetailPage />}
+            />
+            <Route
+              path="/le-club/president-ri/objectifs"
+              element={<RiPresidentObjectivesPage />}
+            />
             <Route path="/nos-actions" element={<ActionsPage />} />
             <Route path="/nos-actions/:slug" element={<ActionDetailPage />} />
             <Route path="/nos-actualites" element={<NewsPage />} />

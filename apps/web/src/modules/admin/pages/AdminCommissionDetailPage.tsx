@@ -545,12 +545,17 @@ export function AdminCommissionDetailPage() {
 
       <ConfirmDialog
         open={confirmDelete}
-        onClose={() => !deleteMutation.isPending && setConfirmDelete(false)}
+        onClose={() => {
+          if (deleteMutation.isPending) return;
+          setConfirmDelete(false);
+          deleteMutation.reset();
+        }}
         onConfirm={() => deleteMutation.mutate()}
         title="Supprimer cette commission ?"
         description={`La commission « ${commission.name} » sera définitivement supprimée. Cette action est irréversible.`}
         confirmLabel="Supprimer"
         confirmPending={deleteMutation.isPending}
+        error={deleteMutation.isError ? deleteMutation.error.message : null}
         destructive
       />
 

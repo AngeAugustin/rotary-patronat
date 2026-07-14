@@ -142,9 +142,6 @@ export class CommissionsAdminService {
           select: {
             members: true,
             projects: true,
-            posts: true,
-            documents: true,
-            calendarEvents: true,
           },
         },
       },
@@ -166,18 +163,14 @@ export class CommissionsAdminService {
       });
     }
 
-    const linkedContent =
-      commission._count.projects +
-      commission._count.posts +
-      commission._count.documents +
-      commission._count.calendarEvents;
-
-    if (linkedContent > 0) {
+    // Projects require a commission (ON DELETE RESTRICT). Posts / documents /
+    // calendar events detach automatically (ON DELETE SET NULL).
+    if (commission._count.projects > 0) {
+      const n = commission._count.projects;
       throw new BadRequestException({
         error: {
-          code: 'COMMISSION_HAS_CONTENT',
-          message:
-            'Impossible de supprimer cette commission : des projets, publications, documents ou événements y sont encore rattachés.',
+          code: 'COMMISSION_HAS_PROJECTS',
+          message: `Impossible de supprimer cette commission : ${n} projet${n > 1 ? 's' : ''} y ${n > 1 ? 'sont' : 'est'} encore rattaché${n > 1 ? 's' : ''}. Réaffectez ou supprimez-les d’abord.`,
         },
       });
     }

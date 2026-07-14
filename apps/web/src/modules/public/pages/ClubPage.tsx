@@ -1,11 +1,14 @@
-import { Eye, Target } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Eye, Target } from 'lucide-react';
 import type { ExecutiveMember } from '@rotary/shared-types';
 import { PageHero } from '../components/PageHero';
 import { PageSection } from '../components/PageSection';
-import { ClubHistoryTimeline } from '../components/ClubHistoryTimeline';
+import { ClubHeritageSection } from '../components/ClubHeritageSection';
+import { ClubRiPresidentSection } from '../components/ClubRiPresidentSection';
 import { SectionHeader } from '../components/SectionHeader';
 import { ScrollReveal } from '../components/ScrollReveal';
 import { useClubProfile } from '../hooks/use-public-content';
+import { publicCommissions } from '../constants/public-commissions';
 import { cn } from '@/lib/utils';
 import { publicContainerClass } from '../constants/layout';
 
@@ -254,23 +257,9 @@ export function ClubPage() {
         imageUrl={CLUB_HERO_IMAGE}
       />
 
+      <ClubHeritageSection history={data.history} />
+
       <PageSection>
-        <SectionHeader
-          align="left"
-          eyebrow="Héritage"
-          title="Notre histoire"
-          className="mx-0 max-w-2xl text-left"
-        />
-        <ScrollReveal className="mt-10 max-w-4xl">
-          <p className="text-xl leading-relaxed text-neutral-700 md:text-2xl md:leading-relaxed">
-            {data.history}
-          </p>
-        </ScrollReveal>
-      </PageSection>
-
-      <ClubHistoryTimeline events={data.timeline} />
-
-      <PageSection tone="muted">
         <div className="grid gap-6 lg:grid-cols-2">
           <ScrollReveal>
             <div className="h-full rounded-3xl border border-primary-100 bg-neutral-0 p-8 shadow-soft">
@@ -292,6 +281,19 @@ export function ClubPage() {
           </ScrollReveal>
         </div>
       </PageSection>
+
+      {data.riPresidentName &&
+        data.riPresidentTitle &&
+        data.riPresidentBio &&
+        data.riPresidentMessage && (
+          <ClubRiPresidentSection
+            name={data.riPresidentName}
+            title={data.riPresidentTitle}
+            bio={data.riPresidentBio}
+            message={data.riPresidentMessage}
+            photo={data.riPresidentPhoto}
+          />
+        )}
 
       <PageSection tone="muted">
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-16 lg:items-start">
@@ -357,17 +359,30 @@ export function ClubPage() {
           description="Les pôles d'action qui structurent la vie du club."
           className="mx-0 max-w-none"
         />
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {data.commissions.map((commission, i) => (
-            <ScrollReveal key={commission.id} delay={i * 0.05}>
-              <article className="h-full rounded-3xl border border-neutral-100 bg-neutral-0 p-7 shadow-soft transition-all hover:border-primary-200 hover:shadow-lift">
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {publicCommissions.map((commission, i) => (
+            <ScrollReveal key={commission.slug} delay={i * 0.05}>
+              <article className="group flex h-full flex-col rounded-3xl border border-neutral-100 bg-neutral-0 p-7 shadow-soft transition-all hover:border-primary-200 hover:shadow-lift">
                 <div className="h-1 w-12 rounded-full bg-accent-500" />
                 <h3 className="mt-5 font-display text-xl font-semibold text-primary-900">
                   {commission.name}
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-neutral-700">
-                  {commission.description}
+                <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent-700">
+                  {commission.contact.name}
                 </p>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-neutral-700">
+                  {commission.shortDescription}
+                </p>
+                <Link
+                  to={`/le-club/commissions/${commission.slug}`}
+                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 transition-colors hover:text-accent-700"
+                >
+                  Voir la fiche
+                  <ArrowRight
+                    className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                </Link>
               </article>
             </ScrollReveal>
           ))}

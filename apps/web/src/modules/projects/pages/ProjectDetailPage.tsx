@@ -285,7 +285,8 @@ export function ProjectDetailPage() {
     project.status === ProjectStatus.IN_PROGRESS;
   const canChangeProjectStatus =
     canManage || Boolean(currentUser && currentUser.id === project.leadUserId);
-  const canEditOrDelete =
+  const canDelete = canChangeProjectStatus;
+  const canEdit =
     canChangeProjectStatus && project.status === ProjectStatus.PLANNED;
   const canAddTasks =
     canManage &&
@@ -330,37 +331,38 @@ export function ProjectDetailPage() {
               </div>
             </div>
 
-            {(canEditOrDelete ||
+            {(canEdit ||
+              canDelete ||
               (canChangeProjectStatus && project.status !== ProjectStatus.COMPLETED)) && (
               <div className="flex shrink-0 flex-wrap items-center gap-2">
-                {canEditOrDelete && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="bg-neutral-0/80"
-                      onClick={() => setEditOpen(true)}
-                      disabled={statusPending || deleteMutation.isPending}
-                    >
-                      <Pencil className="h-3.5 w-3.5" aria-hidden />
-                      Modifier
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="bg-neutral-0/80 text-red-700 hover:border-red-200 hover:bg-red-50 hover:text-red-800"
-                      onClick={() => {
-                        deleteMutation.reset();
-                        setDeleteOpen(true);
-                      }}
-                      disabled={statusPending || deleteMutation.isPending}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                      Supprimer
-                    </Button>
-                  </>
+                {canEdit && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="bg-neutral-0/80"
+                    onClick={() => setEditOpen(true)}
+                    disabled={statusPending || deleteMutation.isPending}
+                  >
+                    <Pencil className="h-3.5 w-3.5" aria-hidden />
+                    Modifier
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="bg-neutral-0/80 text-red-700 hover:border-red-200 hover:bg-red-50 hover:text-red-800"
+                    onClick={() => {
+                      deleteMutation.reset();
+                      setDeleteOpen(true);
+                    }}
+                    disabled={statusPending || deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                    Supprimer
+                  </Button>
                 )}
                 {canChangeProjectStatus && project.status !== ProjectStatus.COMPLETED && (
                   <>
